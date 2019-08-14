@@ -22,8 +22,6 @@ type PhoBo struct {
 	cntPhotos   uint64
 }
 
-var pPhoBo *PhoBo
-
 // NewPhoBo is an initializer function for a PhoBo
 func NewPhoBo(newNameOfParty string) *PhoBo {
 	d := &PhoBo{
@@ -93,11 +91,6 @@ func (d *PhoBo) cbEndSmile(e *fsm.Event) {
 
 }
 
-func (d *PhoBo) endSmileAfter(t time.Duration) {
-	time.Sleep(t)
-	d.FSM.Event("endSmile")
-}
-
 func (d *PhoBo) decideForMeAfter(t time.Duration) {
 	time.Sleep(t)
 	if rand.Float32() < 0.5 {
@@ -108,45 +101,75 @@ func (d *PhoBo) decideForMeAfter(t time.Duration) {
 
 }
 
+func (d *PhoBo) emitEventAfter(e string, t time.Duration) {
+	time.Sleep(t)
+	d.FSM.Event(e)
+}
+
+func (d *PhoBo) listEventLinks() string {
+	var ret string
+	for _, v := range d.FSM.AvailableTransitions() {
+		ret += "<a href=\"" + v + "\">" + v + "</a> "
+	}
+	return ret
+}
+
+// handleEventRoute handles actions and response after a request
+func handleEventRoute(w http.ResponseWriter, r *http.Request, p *PhoBo, e string, fPossible func(*PhoBo)) {
+	possible := p.FSM.Can(e)
+
+	if possible {
+		fPossible(p)
+	}
+
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"eventSuccess":        possible,
+		"cntPhotos":           p.cntPhotos,
+		"currentState":        p.FSM.Current(),
+		"possibleTransitions": p.FSM.AvailableTransitions(),
+	})
+}
+
 func main() {
 	mPhoBo := NewPhoBo("Party")
-	pPhoBo = mPhoBo
 
 	router := mux.NewRouter()
 
 	router.HandleFunc("/doPhoto", func(w http.ResponseWriter, r *http.Request) {
-		possible := pPhoBo.FSM.Can("doPhoto")
-
-		if possible {
-			pPhoBo.FSM.Event("doPhoto")
-			go pPhoBo.decideForMeAfter(1 * time.Second)
-		}
-
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"eventSuccess": possible,
-			"cntPhotos":    pPhoBo.cntPhotos,
-		})
+		handleEventRoute(w, r, mPhoBo, "doPhoto",
+			func(p *PhoBo) {
+				p.FSM.Event("doPhoto")
+				go p.decideForMeAfter(1 * time.Second)
+			})
 	})
 
 	router.HandleFunc("/deletePhoto", func(w http.ResponseWriter, r *http.Request) {
-		pPhoBo.FSM.Event("deletePhoto")
-		json.NewEncoder(w).Encode(map[string]bool{"eventSuccess": true})
+		handleEventRoute(w, r, mPhoBo, "deletePhoto",
+			func(p *PhoBo) {
+				p.FSM.Event("deletePhoto")
+			})
 	})
 
 	router.HandleFunc("/acceptPhoto", func(w http.ResponseWriter, r *http.Request) {
-		pPhoBo.FSM.Event("acceptPhoto")
-		json.NewEncoder(w).Encode(map[string]bool{"eventSuccess": true})
+		handleEventRoute(w, r, mPhoBo, "acceptPhoto",
+			func(p *PhoBo) {
+				p.FSM.Event("acceptPhoto")
+			})
 	})
 
 	router.HandleFunc("/beginSmile", func(w http.ResponseWriter, r *http.Request) {
-		pPhoBo.FSM.Event("beginSmile")
-		go pPhoBo.endSmileAfter(3 * time.Second)
-		json.NewEncoder(w).Encode(map[string]bool{"eventSuccess": true})
+		handleEventRoute(w, r, mPhoBo, "beginSmile",
+			func(p *PhoBo) {
+				p.FSM.Event("beginSmile")
+				go p.emitEventAfter("endSmile", 3*time.Second)
+			})
 	})
 
 	router.HandleFunc("/endSmile", func(w http.ResponseWriter, r *http.Request) {
-		pPhoBo.FSM.Event("endSmile")
-		json.NewEncoder(w).Encode(map[string]bool{"eventSuccess": true})
+		handleEventRoute(w, r, mPhoBo, "endSmile",
+			func(p *PhoBo) {
+				p.FSM.Event("endSmile")
+			})
 	})
 
 	router.HandleFunc("/quit", func(w http.ResponseWriter, r *http.Request) {
@@ -155,21 +178,11 @@ func main() {
 	})
 
 	srv := &http.Server{
-		Handler: router,
-		Addr:    "127.0.0.1:8000",
-		// Good practice: enforce timeouts for servers you create!
+		Handler:      router,
+		Addr:         "127.0.0.1:8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
 
 	log.Fatal(srv.ListenAndServe())
-
-	// mPhoBo.FSM.Event("doPhoto")
-	// mPhoBo.FSM.Event("acceptPhoto")
-	// mPhoBo.FSM.Event("doPhoto")
-	// mPhoBo.FSM.Event("deletePhoto")
-	// mPhoBo.FSM.Event("beginSmile")
-	// mPhoBo.FSM.Event("endSmile")
-
-	// time.Sleep(3 * time.Second)
 }
