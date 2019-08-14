@@ -6,6 +6,9 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"os/exec"
+	"runtime"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -63,6 +66,15 @@ func (d *PhoBo) beforeEvent(e *fsm.Event) {
 
 func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 	d.cntPhotos++
+
+	if runtime.GOOS == "windows" {
+		out, err := exec.Command("cmd", "/C", "echo I have made a photo.").Output()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("   -> executed photo command. \n   -> Output: %s", out)
+	}
+
 }
 
 func (d *PhoBo) cbDeletePhoto(e *fsm.Event) {
@@ -103,10 +115,17 @@ func main() {
 	router := mux.NewRouter()
 
 	router.HandleFunc("/doPhoto", func(w http.ResponseWriter, r *http.Request) {
-		pPhoBo.FSM.Event("doPhoto")
-		go pPhoBo.decideForMeAfter(1 * time.Second)
-		json.NewEncoder(w).Encode(map[string]bool{"eventSuccess": true})
-		json.NewEncoder(w).Encode(map[string]uint64{"cntPhotos": pPhoBo.cntPhotos})
+		possible := pPhoBo.FSM.Can("doPhoto")
+
+		if possible {
+			pPhoBo.FSM.Event("doPhoto")
+			go pPhoBo.decideForMeAfter(1 * time.Second)
+		}
+
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"eventSuccess": possible,
+			"cntPhotos":    pPhoBo.cntPhotos,
+		})
 	})
 
 	router.HandleFunc("/deletePhoto", func(w http.ResponseWriter, r *http.Request) {
@@ -128,6 +147,11 @@ func main() {
 	router.HandleFunc("/endSmile", func(w http.ResponseWriter, r *http.Request) {
 		pPhoBo.FSM.Event("endSmile")
 		json.NewEncoder(w).Encode(map[string]bool{"eventSuccess": true})
+	})
+
+	router.HandleFunc("/quit", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]bool{"commandSuccess": true})
+		os.Exit(0)
 	})
 
 	srv := &http.Server{
