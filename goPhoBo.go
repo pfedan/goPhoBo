@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/looplab/fsm"
 )
@@ -80,5 +79,5 @@ func main() {
 	PhoBo.FSM.Event("beginSmile")
 	PhoBo.FSM.Event("endSmile")
 
-	time.Sleep(3 * time.Second)
+	//time.Sleep(3 * time.Second)
 }
