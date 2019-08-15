@@ -3,16 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"goPhoBo/src/randimg"
+	"image/jpeg"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/k0kubun/go-ansi"
 	"github.com/looplab/fsm"
+	"github.com/nfnt/resize"
 )
 
 // PhoBo structure, containing all needed stuff
@@ -20,6 +26,7 @@ type PhoBo struct {
 	nameOfParty string
 	FSM         *fsm.FSM
 	cntPhotos   uint64
+	smallWidth  uint
 }
 
 // NewPhoBo is an initializer function for a PhoBo
@@ -49,6 +56,7 @@ func NewPhoBo(newNameOfParty string) *PhoBo {
 	)
 
 	d.cntPhotos = 0
+	d.smallWidth = 120
 
 	return d
 }
@@ -63,14 +71,47 @@ func (d *PhoBo) beforeEvent(e *fsm.Event) {
 }
 
 func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
+	for i := 3.0; i > 0; i -= 1 {
+		ansi.CursorHorizontalAbsolute(1)
+		ansi.EraseInLine(0)
+		fmt.Printf("Countdown: %.1f\n", i)
+		time.Sleep(1000 * time.Millisecond)
+	}
+
 	d.cntPhotos++
 
 	if runtime.GOOS == "windows" {
-		out, err := exec.Command("cmd", "/C", "echo I have made a photo.").Output()
+		out, err := exec.Command("cmd", "/C", "echo I should have made a photo.").Output()
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Printf("   -> executed photo command. \n   -> Output: %s", out)
+
+		m := randimg.GetImg(800, 600)
+
+		newpath := filepath.Join(".", "img", "small")
+		os.MkdirAll(newpath, os.ModePerm)
+
+		fname := time.Now().Format("2006-01-02T15-04-05.jpg")
+		fa, erra := os.OpenFile("img/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		if erra != nil {
+			fmt.Println(err)
+			return
+		}
+		defer fa.Close()
+		o := jpeg.Options{Quality: 90}
+		jpeg.Encode(fa, m, &o)
+
+		// also save a thumbnail
+		mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
+		fb, errb := os.OpenFile("img/small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		if errb != nil {
+			fmt.Println(errb)
+			return
+		}
+		defer fb.Close()
+		jpeg.Encode(fb, mThumbnail, &o)
+
 	}
 
 }
@@ -130,6 +171,22 @@ func handleEventRoute(w http.ResponseWriter, r *http.Request, p *PhoBo, e string
 	})
 }
 
+func getImageFileNames(path string) []string {
+	var list []string
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return list
+	}
+
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		list = append(list, f.Name())
+	}
+	return list
+}
+
 func main() {
 	mPhoBo := NewPhoBo("Party")
 
@@ -170,6 +227,12 @@ func main() {
 			func(p *PhoBo) {
 				p.FSM.Event("endSmile")
 			})
+	})
+
+	router.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"imageFiles": getImageFileNames("img/"),
+		})
 	})
 
 	router.HandleFunc("/quit", func(w http.ResponseWriter, r *http.Request) {
