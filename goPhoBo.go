@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/k0kubun/go-ansi"
 	"github.com/looplab/fsm"
 )
 
@@ -63,6 +64,14 @@ func (d *PhoBo) beforeEvent(e *fsm.Event) {
 }
 
 func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
+	for i := 3.0; i > 0; i -= 1 {
+		ansi.CursorHorizontalAbsolute(1)
+		ansi.EraseInLine(0)
+		fmt.Printf("Countdown: %.1f\n", i)
+		time.Sleep(1000 * time.Millisecond)
+	}
+	fmt.Println("")
+
 	d.cntPhotos++
 
 	if runtime.GOOS == "windows" {
