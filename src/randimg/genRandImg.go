@@ -8,6 +8,10 @@ import (
 	"time"
 )
 
+type RandImgOptions struct {
+	W, H int
+	Seed int64
+}
 type Circle struct {
 	X, Y, R          float64
 	red, green, blue float64
@@ -22,21 +26,26 @@ func (c *Circle) getColorAt(x, y float64) color.RGBA {
 	} else {
 		// inside
 		return color.RGBA{
-			uint8((1 - math.Pow(d, 5)) * 255 * c.red),
-			uint8((1 - math.Pow(d, 5)) * 255 * c.green),
-			uint8((1 - math.Pow(d, 5)) * 255 * c.blue),
+			uint8((1 - math.Pow(d, 5)) * 200 * c.red),
+			uint8((1 - math.Pow(d, 5)) * 200 * c.green),
+			uint8((1 - math.Pow(d, 5)) * 200 * c.blue),
 			255,
 		}
 	}
 }
 
-func GetImg(w, h int) *image.RGBA {
-	rand.Seed(time.Now().UTC().UnixNano())
+func GetImg(o RandImgOptions) *image.RGBA {
+	if o.Seed == 0 {
+		rand.Seed(time.Now().UTC().UnixNano())
+	} else {
+		rand.Seed(o.Seed)
+	}
+
 	circs := make([]*Circle, 20)
 	for i := range circs {
 		circs[i] = &Circle{
-			X:     rand.Float64() * float64(w),
-			Y:     rand.Float64() * float64(h),
+			X:     rand.Float64() * float64(o.W),
+			Y:     rand.Float64() * float64(o.H),
 			R:     rand.Float64()*200 + 10,
 			red:   rand.Float64(),
 			green: rand.Float64(),
@@ -45,9 +54,9 @@ func GetImg(w, h int) *image.RGBA {
 
 	}
 
-	m := image.NewRGBA(image.Rect(0, 0, w, h))
-	for x := 0; x < w; x++ {
-		for y := 0; y < h; y++ {
+	m := image.NewRGBA(image.Rect(0, 0, o.W, o.H))
+	for x := 0; x < o.W; x++ {
+		for y := 0; y < o.H; y++ {
 
 			var iCol, cCol color.RGBA
 			for _, v := range circs {

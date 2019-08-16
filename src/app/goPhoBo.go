@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"goPhoBo/src/randimg"
 	"image/jpeg"
 	"io/ioutil"
 	"log"
@@ -14,6 +13,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+
+	"github.com/pfedan/goPhoBo/src/randimg"
 
 	"github.com/gorilla/mux"
 	"github.com/k0kubun/go-ansi"
@@ -87,7 +88,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		}
 		fmt.Printf("   -> executed photo command. \n   -> Output: %s", out)
 
-		m := randimg.GetImg(800, 600)
+		m := randimg.GetImg(randimg.RandImgOptions{W: 800, H: 600})
 
 		newpath := filepath.Join(".", "img", "small")
 		os.MkdirAll(newpath, os.ModePerm)
@@ -155,6 +156,13 @@ func (d *PhoBo) listEventLinks() string {
 	return ret
 }
 
+type responseStatus struct {
+	EventSuccess        bool `json:"eventSuccess"`
+	CntPhotos           uint64
+	CurrentState        string
+	PossibleTransitions []string
+}
+
 // handleEventRoute handles actions and response after a request
 func handleEventRoute(w http.ResponseWriter, r *http.Request, p *PhoBo, e string, fPossible func(*PhoBo)) {
 	possible := p.FSM.Can(e)
@@ -163,12 +171,14 @@ func handleEventRoute(w http.ResponseWriter, r *http.Request, p *PhoBo, e string
 		fPossible(p)
 	}
 
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"eventSuccess":        possible,
-		"cntPhotos":           p.cntPhotos,
-		"currentState":        p.FSM.Current(),
-		"possibleTransitions": p.FSM.AvailableTransitions(),
-	})
+	res := responseStatus{
+		EventSuccess:        possible,
+		CntPhotos:           p.cntPhotos,
+		CurrentState:        p.FSM.Current(),
+		PossibleTransitions: p.FSM.AvailableTransitions(),
+	}
+
+	json.NewEncoder(w).Encode(res)
 }
 
 func getImageFileNames(path string) []string {
@@ -230,7 +240,7 @@ func main() {
 	})
 
 	router.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode(map[string]interface{}{
+		json.NewEncoder(w).Encode(map[string][]string{
 			"imageFiles": getImageFileNames("img/"),
 		})
 	})
