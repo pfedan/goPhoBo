@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+
+<body>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <span class="close">×</span>
+        <img class="modal-content" id="img01">
+    </div>
+
+    <div id="gallery"></div>
+
+    <script>
+        var modal = document.getElementById('myModal');
+        var modalImg = document.getElementById("img01");
+
+        var xmlhttp = new XMLHttpRequest();
+
+        xmlhttp.onreadystatechange = function () {
+            if (this.readyState == 4 && this.status == 200) {
+                var res = JSON.parse(this.responseText);
+                makeImageView(res.imageFiles);
+            }
+        };
+        xmlhttp.open("GET", "../images", true);
+        xmlhttp.send();
+
+        function makeImageView(list) {
+            document.getElementById("gallery").innerHTML = '';
+            var i;
+            for (i = 0; i < list.length; i++) {
+                var node = document.createElement("DIV");
+                node.innerHTML = '<div class="polaroid">' + //'<a href="../img/' + list[i] + '">' +
+                    '<img class="myImg" src="../img/' + list[i] + '" alt="' + list[i] + '">' + //'</a>' +
+                    '<div class="container">' +
+                    '<p>' + list[i] + '</p>' +
+                    '</div>' +
+                    '</div>';
+                document.getElementById("gallery").appendChild(node);
+            }
+
+            var imgList = document.getElementsByClassName('myImg');
+            for (i = 0; i < imgList.length; i++) {
+                imgList[i].onclick = function () {
+                    modal.style.display = "block";
+                    modalImg.src = this.src;
+                }
+            }
+        }
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+        span.onclick = function () {
+            modal.style.display = "none";
+        }
+    </script>
+</body>
+
+</html>

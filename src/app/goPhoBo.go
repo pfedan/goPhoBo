@@ -202,6 +202,9 @@ func main() {
 
 	router := mux.NewRouter()
 
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	router.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir("./img/"))))
+
 	router.HandleFunc("/doPhoto", func(w http.ResponseWriter, r *http.Request) {
 		handleEventRoute(w, r, mPhoBo, "doPhoto",
 			func(p *PhoBo) {
