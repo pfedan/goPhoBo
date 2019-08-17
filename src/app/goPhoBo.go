@@ -39,7 +39,8 @@ func NewPhoBo(newNameOfParty string) *PhoBo {
 	d.FSM = fsm.NewFSM(
 		"home",
 		fsm.Events{
-			{Name: "doPhoto", Src: []string{"home"}, Dst: "decide"},
+			{Name: "doPhoto", Src: []string{"home"}, Dst: "makingPhoto"},
+			{Name: "beginDecide", Src: []string{"makingPhoto"}, Dst: "decide"},
 			{Name: "deletePhoto", Src: []string{"decide"}, Dst: "home"},
 			{Name: "acceptPhoto", Src: []string{"decide"}, Dst: "home"},
 			{Name: "beginSmile", Src: []string{"home"}, Dst: "smile"},
@@ -56,8 +57,8 @@ func NewPhoBo(newNameOfParty string) *PhoBo {
 		},
 	)
 
-	d.cntPhotos = 0
-	d.smallWidth = 120
+	d.cntPhotos = uint64(len(getImageFileNames("img/")))
+	d.smallWidth = 240
 
 	return d
 }
@@ -157,10 +158,10 @@ func (d *PhoBo) listEventLinks() string {
 }
 
 type responseStatus struct {
-	EventSuccess        bool `json:"eventSuccess"`
-	CntPhotos           uint64
-	CurrentState        string
-	PossibleTransitions []string
+	EventSuccess        bool     `json:"eventSuccess"`
+	CntPhotos           uint64   `json:"cntPhotos"`
+	CurrentState        string   `json:"currentState"`
+	PossibleTransitions []string `json:"possibleTransitions"`
 }
 
 // handleEventRoute handles actions and response after a request
@@ -209,6 +210,7 @@ func main() {
 		handleEventRoute(w, r, mPhoBo, "doPhoto",
 			func(p *PhoBo) {
 				p.FSM.Event("doPhoto")
+				p.FSM.Event("beginDecide")
 				go p.decideForMeAfter(1 * time.Second)
 			})
 	})
@@ -248,6 +250,16 @@ func main() {
 		})
 	})
 
+	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
+		res := responseStatus{
+			CntPhotos:           mPhoBo.cntPhotos,
+			CurrentState:        mPhoBo.FSM.Current(),
+			PossibleTransitions: mPhoBo.FSM.AvailableTransitions(),
+		}
+
+		json.NewEncoder(w).Encode(res)
+	})
+
 	router.HandleFunc("/quit", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"commandSuccess": true})
 		os.Exit(0)
@@ -255,7 +267,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         "127.0.0.1:8000",
+		Addr:         ":8000",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

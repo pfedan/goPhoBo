@@ -13,6 +13,10 @@
         <img class="modal-content" id="img01">
     </div>
 
+    <div id="status">
+        <pre id="json"></pre>
+    </div>
+
     <div id="gallery"></div>
 
     <script>
@@ -20,37 +24,105 @@
         var modalImg = document.getElementById("img01");
 
         var xmlhttp = new XMLHttpRequest();
+        var xmlhttpRefresh = new XMLHttpRequest();
 
-        xmlhttp.onreadystatechange = function () {
+        var cntPhotos = 0;
+        var currentState = '';
+
+        document.addEventListener("keypress", function onEvent(event) {
+            if (event.key == "s") {
+                var statusBox = document.getElementById('status')
+                if (statusBox.style.display=="block") {
+                    statusBox.style.display="none";
+                } else {
+                    statusBox.style.display="block"
+                }
+            } else if (event.key == "p") {
+                loadXMLDoc("../doPhoto",function(){})
+            }
+        });
+
+        function loadXMLDoc(url, cfunc) {
+            //Code to catch modern browsers
+            if (window.XMLHttpRequest) {
+                xmlhttpRefresh = new XMLHttpRequest();
+            }
+
+            //Code to catch crap browsers
+            else {
+                xmlhttpRefresh = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+
+            //Set up
+            xmlhttpRefresh.onreadystatechange = cfunc;
+            xmlhttpRefresh.open("GET", url, true);
+            xmlhttpRefresh.send();
+        }
+
+        xmlhttp.onreadystatechange = getNewImageList;
+
+        function getNewImageList() {
             if (this.readyState == 4 && this.status == 200) {
                 var res = JSON.parse(this.responseText);
-                makeImageView(res.imageFiles);
+                if ("imageFiles" in res && res.imageFiles.length != cntPhotos && currentState == 'home') {
+                    console.log(res.imageFiles[0]);
+                    makeImageView(res.imageFiles);
+                }
+                //document.getElementById('json').innerHTML = JSON.stringify(res, undefined, 2);
             }
-        };
+        }
+
         xmlhttp.open("GET", "../images", true);
         xmlhttp.send();
 
         function makeImageView(list) {
-            document.getElementById("gallery").innerHTML = '';
+            //document.getElementById("gallery").innerHTML = '';
             var i;
-            for (i = 0; i < list.length; i++) {
+            for (i = cntPhotos; i < list.length; i++) {
                 var node = document.createElement("DIV");
                 node.innerHTML = '<div class="polaroid">' + //'<a href="../img/' + list[i] + '">' +
-                    '<img class="myImg" src="../img/' + list[i] + '" alt="' + list[i] + '">' + //'</a>' +
+                    '<img class="myImg" src="../img/small/' + list[i] + '" alt="' + list[i] + '">' + //'</a>' +
                     '<div class="container">' +
-                    '<p>' + list[i] + '</p>' +
+                    //'<p>' + list[i] + '</p>' +
                     '</div>' +
                     '</div>';
+                
                 document.getElementById("gallery").appendChild(node);
+                var polaroids = document.getElementsByClassName("polaroid");
+                polaroids[polaroids.length - 1].style.transform = "rotate(" + (Math.floor(Math.random() * 20) - 10).toString() + "deg)";
             }
 
             var imgList = document.getElementsByClassName('myImg');
-            for (i = 0; i < imgList.length; i++) {
+            for (i = cntPhotos; i < imgList.length; i++) {
                 imgList[i].onclick = function () {
                     modal.style.display = "block";
-                    modalImg.src = this.src;
+                    modalImg.src = this.src.replace('small/', '');
                 }
             }
+            cntPhotos = list.length;
+        }
+
+        autoRefresh();
+
+        function autoRefresh() {
+            console.log("called autoRefresh")
+            var target = document.getElementById('json');
+            var url = '../status';
+
+            var doRefresh = function () {
+                xmlhttp.open("GET", "../images", true);
+                xmlhttp.send();
+                loadXMLDoc(url, function () {
+                    if (xmlhttpRefresh.readyState == 4 && xmlhttpRefresh.status == 200) {
+                        var res = JSON.parse(xmlhttpRefresh.responseText);
+                        target.innerHTML = JSON.stringify(res, undefined, 2);
+                        currentState = res.currentState;
+                    };
+                });
+            }
+
+
+            setInterval(doRefresh, 200);
         }
 
         // Get the <span> element that closes the modal
@@ -58,6 +130,9 @@
         span.onclick = function () {
             modal.style.display = "none";
         }
+
+
+
     </script>
 </body>
 

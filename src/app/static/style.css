@@ -1,5 +1,18 @@
 body {
-    margin: 25px;
+    margin: 20px;
+    height: 100%;
+    background-image: radial-gradient(#777777,#000);
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+#status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    opacity: 0.75;
+    background-color: white;
+    display: none;
 }
 
 .myImg {
@@ -13,12 +26,12 @@ body {
 }
 
 div.polaroid img {
-    width: 100%;
+    width: 90%;
 }
 
 div.container {
     text-align: center;
-    padding: 10px 20px;
+    padding: 30px 20px;
 }
 
 * {
@@ -31,6 +44,8 @@ div.container {
     box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
     margin-bottom: 25px;
     float: left;
+    text-align: center;
+    padding-top: 13px;
 }
 
 @media only screen and (max-width: 1300px) {
@@ -53,9 +68,9 @@ div.container {
     }
 }
 
-@media only screen and (max-width: 300px) {
+@media only screen and (max-width: 370px) {
     .polaroid {
-        width: 49.999999%;
+        width: 100%;
     }
 }
 
