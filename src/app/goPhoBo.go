@@ -88,33 +88,32 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 			log.Fatal(err)
 		}
 		fmt.Printf("   -> executed photo command. \n   -> Output: %s", out)
-
-		m := randimg.GetImg(randimg.RandImgOptions{W: 800, H: 600})
-
-		newpath := filepath.Join(".", "img", "small")
-		os.MkdirAll(newpath, os.ModePerm)
-
-		fname := time.Now().Format("2006-01-02T15-04-05.jpg")
-		fa, erra := os.OpenFile("img/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
-		if erra != nil {
-			fmt.Println(err)
-			return
-		}
-		defer fa.Close()
-		o := jpeg.Options{Quality: 90}
-		jpeg.Encode(fa, m, &o)
-
-		// also save a thumbnail
-		mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
-		fb, errb := os.OpenFile("img/small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
-		if errb != nil {
-			fmt.Println(errb)
-			return
-		}
-		defer fb.Close()
-		jpeg.Encode(fb, mThumbnail, &o)
-
 	}
+
+	m := randimg.GetImg(randimg.RandImgOptions{W: 800, H: 600})
+
+	newpath := filepath.Join(".", "img", "small")
+	os.MkdirAll(newpath, os.ModePerm)
+
+	fname := time.Now().Format("2006-01-02T15-04-05.jpg")
+	fa, erra := os.OpenFile("img/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+	if erra != nil {
+		fmt.Println(erra)
+		return
+	}
+	defer fa.Close()
+	o := jpeg.Options{Quality: 90}
+	jpeg.Encode(fa, m, &o)
+
+	// also save a thumbnail
+	mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
+	fb, errb := os.OpenFile("img/small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+	if errb != nil {
+		fmt.Println(errb)
+		return
+	}
+	defer fb.Close()
+	jpeg.Encode(fb, mThumbnail, &o)
 
 }
 
@@ -267,7 +266,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":8000",
+		Addr:         ":7070",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}

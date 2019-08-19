@@ -10,12 +10,17 @@
     <!-- The Modal -->
     <div id="myModal" class="modal">
         <span class="close">×</span>
-        <img class="modal-content" id="img01">
+        <div class="modal-content modalPolaroid" style="display: block;">
+            <img class="myImg" id="img01">
+            <div class="container"></div>
+        </div>
+
     </div>
 
     <div id="status">
         <pre id="json"></pre>
     </div>
+    <div id="currentState"></div>
 
     <div id="gallery"></div>
 
@@ -32,13 +37,20 @@
         document.addEventListener("keypress", function onEvent(event) {
             if (event.key == "s") {
                 var statusBox = document.getElementById('status')
-                if (statusBox.style.display=="block") {
-                    statusBox.style.display="none";
+                if (statusBox.style.display == "block") {
+                    statusBox.style.display = "none";
                 } else {
-                    statusBox.style.display="block"
+                    statusBox.style.display = "block"
                 }
-            } else if (event.key == "p") {
-                loadXMLDoc("../doPhoto",function(){})
+            } else if (event.key == "a") {
+                var stateBox = document.getElementById('currentState')
+                if (stateBox.style.display == "block") {
+                    stateBox.style.display = "none";
+                } else {
+                    stateBox.style.display = "block"
+                }
+            } else if (event.key == "p" || event.key == " ") {
+                loadXMLDoc("../doPhoto", function () { })
             }
         });
 
@@ -86,7 +98,7 @@
                     //'<p>' + list[i] + '</p>' +
                     '</div>' +
                     '</div>';
-                
+
                 document.getElementById("gallery").appendChild(node);
                 var polaroids = document.getElementsByClassName("polaroid");
                 polaroids[polaroids.length - 1].style.transform = "rotate(" + (Math.floor(Math.random() * 20) - 10).toString() + "deg)";
@@ -95,7 +107,7 @@
             var imgList = document.getElementsByClassName('myImg');
             for (i = cntPhotos; i < imgList.length; i++) {
                 imgList[i].onclick = function () {
-                    modal.style.display = "block";
+                    modal.style.display = "flex";
                     modalImg.src = this.src.replace('small/', '');
                 }
             }
@@ -117,17 +129,21 @@
                         var res = JSON.parse(xmlhttpRefresh.responseText);
                         target.innerHTML = JSON.stringify(res, undefined, 2);
                         currentState = res.currentState;
+                        document.getElementById('currentState').innerHTML = currentState;
                     };
                 });
             }
 
 
-            setInterval(doRefresh, 200);
+            setInterval(doRefresh, 350);
         }
 
         // Get the <span> element that closes the modal
         var span = document.getElementsByClassName("close")[0];
         span.onclick = function () {
+            modal.style.display = "none";
+        }
+        modal.onclick = function () {
             modal.style.display = "none";
         }
 
