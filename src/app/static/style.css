@@ -65,32 +65,32 @@ div.container {
 
 .modalPolaroid {
     display: inline-block;
-    width: 40%;
+    width:50%;
     max-width: 90%;
     max-height: 90%;
 }
 
-@media only screen and (max-width: 1300px) {
+@media only screen and (max-width: 1500px) {
     .polaroid {
         width: 24.99999%;
         margin: 6px 0;
     }
 }
 
-@media only screen and (max-width: 700px) {
+@media only screen and (max-width: 1100px) {
     .polaroid {
         width: 32.99999%;
         margin: 6px 0;
     }
 }
 
-@media only screen and (max-width: 500px) {
+@media only screen and (max-width: 900px) {
     .polaroid {
         width: 49.999999%;
     }
 }
 
-@media only screen and (max-width: 370px) {
+@media only screen and (max-width: 700px) {
     .polaroid {
         width: 100%;
     }

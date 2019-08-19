@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"image"
 	"image/jpeg"
 	"io/ioutil"
 	"log"
@@ -80,41 +81,69 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		time.Sleep(1000 * time.Millisecond)
 	}
 
-	d.cntPhotos++
+	fname := time.Now().Format("2006-01-02T15-04-05.jpg")
+	newpath := filepath.Join(".", "img", "small")
+	os.MkdirAll(newpath, os.ModePerm)
 
+	o := jpeg.Options{Quality: 90}
 	if runtime.GOOS == "windows" {
 		out, err := exec.Command("cmd", "/C", "echo I should have made a photo.").Output()
 		if err != nil {
 			log.Fatal(err)
 		}
 		fmt.Printf("   -> executed photo command. \n   -> Output: %s", out)
+
+		m := randimg.GetImg(randimg.RandImgOptions{W: 240, H: 180})
+
+		fa, erra := os.OpenFile("img/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		if erra != nil {
+			fmt.Println(erra)
+			return
+		}
+		defer fa.Close()
+		jpeg.Encode(fa, m, &o)
+
+		// also save a thumbnail
+		mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
+		fb, errb := os.OpenFile("img/small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		if errb != nil {
+			fmt.Println(errb)
+			return
+		}
+		defer fb.Close()
+		jpeg.Encode(fb, mThumbnail, &o)
+	} else {
+		gphotoCmd := exec.Command("bash", "-c", "gphoto2 --auto-detect --capture-image-and-download --force-overwrite --filename ./img/"+fname)
+		fmt.Println(gphotoCmd)
+		out, err := gphotoCmd.Output()
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("   -> executed photo command. \n   -> Output: \n%s", out)
+
+		// open new photo
+		fa, err := os.Open("./img/" + fname)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer fa.Close()
+
+		m, _, err := image.Decode(fa)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
+		fb, errb := os.OpenFile("img/small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		if errb != nil {
+			fmt.Println(errb)
+			return
+		}
+		defer fb.Close()
+		jpeg.Encode(fb, mThumbnail, &o)
 	}
 
-	m := randimg.GetImg(randimg.RandImgOptions{W: 800, H: 600})
-
-	newpath := filepath.Join(".", "img", "small")
-	os.MkdirAll(newpath, os.ModePerm)
-
-	fname := time.Now().Format("2006-01-02T15-04-05.jpg")
-	fa, erra := os.OpenFile("img/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
-	if erra != nil {
-		fmt.Println(erra)
-		return
-	}
-	defer fa.Close()
-	o := jpeg.Options{Quality: 90}
-	jpeg.Encode(fa, m, &o)
-
-	// also save a thumbnail
-	mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
-	fb, errb := os.OpenFile("img/small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
-	if errb != nil {
-		fmt.Println(errb)
-		return
-	}
-	defer fb.Close()
-	jpeg.Encode(fb, mThumbnail, &o)
-
+	d.cntPhotos++
 }
 
 func (d *PhoBo) cbDeletePhoto(e *fsm.Event) {
@@ -266,7 +295,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":7070",
+		Addr:         ":http",
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
