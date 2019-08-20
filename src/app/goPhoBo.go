@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"image"
 	"image/jpeg"
@@ -22,6 +21,7 @@ import (
 	"github.com/k0kubun/go-ansi"
 	"github.com/looplab/fsm"
 	"github.com/nfnt/resize"
+	flag "github.com/spf13/pflag"
 )
 
 // PhoBo structure, containing all needed stuff
@@ -31,7 +31,7 @@ type PhoBo struct {
 	smallWidth uint
 }
 
-type PhoBoFlags struct {
+type phoBoFlags struct {
 	nameOfParty string
 	smallWidth  uint
 	port        string
@@ -232,7 +232,7 @@ func getImageFileNames(path string) []string {
 	return list
 }
 
-var flagPhoBo PhoBoFlags
+var flagPhoBo phoBoFlags
 
 func init() {
 	const (
@@ -245,17 +245,10 @@ func init() {
 		staticDefault = "static/"
 		staticUsage   = "Path to static webserver files"
 	)
-	flag.StringVar(&(flagPhoBo.port), "port", portDefault, portUsage)
-	flag.StringVar(&(flagPhoBo.port), "p", portDefault, portUsage+" (shorthand)")
-
-	flag.StringVar(&(flagPhoBo.nameOfParty), "name", nameDefault, nameUsage)
-	flag.StringVar(&(flagPhoBo.nameOfParty), "n", nameDefault, nameUsage+" (shorthand)")
-
-	flag.StringVar(&(flagPhoBo.imgPath), "imgpath", imgDefault, imgUsage)
-	flag.StringVar(&(flagPhoBo.imgPath), "i", imgDefault, imgUsage+" (shorthand)")
-
-	flag.StringVar(&(flagPhoBo.staticPath), "staticpath", staticDefault, staticUsage)
-	flag.StringVar(&(flagPhoBo.staticPath), "s", staticDefault, staticUsage+" (shorthand)")
+	flag.StringVarP(&(flagPhoBo.port), "port", "p", portDefault, portUsage)
+	flag.StringVarP(&(flagPhoBo.nameOfParty), "name", "n", nameDefault, nameUsage)
+	flag.StringVarP(&(flagPhoBo.imgPath), "imgpath", "i", imgDefault, imgUsage)
+	flag.StringVarP(&(flagPhoBo.staticPath), "staticpath", "s", staticDefault, staticUsage)
 }
 
 func main() {
