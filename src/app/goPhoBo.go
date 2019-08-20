@@ -24,14 +24,7 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-// PhoBo structure, containing all needed stuff
-type PhoBo struct {
-	FSM        *fsm.FSM
-	cntPhotos  uint64
-	smallWidth uint
-}
-
-type phoBoFlags struct {
+type PhoBoFlags struct {
 	nameOfParty string
 	smallWidth  uint
 	port        string
@@ -39,9 +32,16 @@ type phoBoFlags struct {
 	staticPath  string
 }
 
+// PhoBo structure, containing all needed stuff
+type PhoBo struct {
+	FSM       *fsm.FSM
+	cntPhotos uint64
+	f         *PhoBoFlags
+}
+
 // NewPhoBo is an initializer function for a PhoBo
-func NewPhoBo() *PhoBo {
-	d := &PhoBo{}
+func NewPhoBo(pFlags *PhoBoFlags) *PhoBo {
+	d := &PhoBo{f: pFlags}
 
 	d.FSM = fsm.NewFSM(
 		"home",
@@ -64,8 +64,7 @@ func NewPhoBo() *PhoBo {
 		},
 	)
 
-	d.cntPhotos = uint64(len(getImageFileNames(flagPhoBo.imgPath)))
-	d.smallWidth = 240
+	d.cntPhotos = uint64(len(getImageFileNames(d.f.imgPath)))
 
 	return d
 }
@@ -88,7 +87,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 	}
 
 	fname := time.Now().Format("2006-01-02T15-04-05.jpg")
-	newpath := filepath.Clean(filepath.Join(flagPhoBo.imgPath, "small"))
+	newpath := filepath.Clean(filepath.Join(d.f.imgPath, "small"))
 	os.MkdirAll(newpath, os.ModePerm)
 
 	o := jpeg.Options{Quality: 90}
@@ -101,7 +100,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 
 		m := randimg.GetImg(randimg.RandImgOptions{W: 800, H: 600})
 
-		fa, erra := os.OpenFile(flagPhoBo.imgPath+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		fa, erra := os.OpenFile(d.f.imgPath+fname, os.O_WRONLY|os.O_CREATE, 0600)
 		if erra != nil {
 			fmt.Println(erra)
 			return
@@ -110,8 +109,8 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		jpeg.Encode(fa, m, &o)
 
 		// also save a thumbnail
-		mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
-		fb, errb := os.OpenFile(flagPhoBo.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		mThumbnail := resize.Resize(d.f.smallWidth, 0, m, resize.Bicubic)
+		fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
 		if errb != nil {
 			fmt.Println(errb)
 			return
@@ -119,7 +118,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		defer fb.Close()
 		jpeg.Encode(fb, mThumbnail, &o)
 	} else {
-		gphotoCmd := exec.Command("bash", "-c", "gphoto2 --auto-detect --capture-image-and-download --force-overwrite --filename "+flagPhoBo.imgPath+fname)
+		gphotoCmd := exec.Command("bash", "-c", "gphoto2 --auto-detect --capture-image-and-download --force-overwrite --filename "+d.f.imgPath+fname)
 		fmt.Println(gphotoCmd)
 		out, err := gphotoCmd.Output()
 		if err != nil {
@@ -128,7 +127,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		fmt.Printf("   -> executed photo command. \n   -> Output: \n%s", out)
 
 		// open new photo
-		fa, err := os.Open(flagPhoBo.imgPath + fname)
+		fa, err := os.Open(d.f.imgPath + fname)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -139,8 +138,8 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 			log.Fatal(err)
 		}
 
-		mThumbnail := resize.Resize(d.smallWidth, 0, m, resize.Bicubic)
-		fb, errb := os.OpenFile(flagPhoBo.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+		mThumbnail := resize.Resize(d.f.smallWidth, 0, m, resize.Bicubic)
+		fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
 		if errb != nil {
 			fmt.Println(errb)
 			return
@@ -232,7 +231,7 @@ func getImageFileNames(path string) []string {
 	return list
 }
 
-var flagPhoBo phoBoFlags
+var flagPhoBo PhoBoFlags
 
 func init() {
 	const (
@@ -244,21 +243,25 @@ func init() {
 		imgUsage      = "Path to image files"
 		staticDefault = "static/"
 		staticUsage   = "Path to static webserver files"
+		smallDefault  = 240
+		smallUsage    = "Width of image thumbnails in px"
 	)
 	flag.StringVarP(&(flagPhoBo.port), "port", "p", portDefault, portUsage)
 	flag.StringVarP(&(flagPhoBo.nameOfParty), "name", "n", nameDefault, nameUsage)
 	flag.StringVarP(&(flagPhoBo.imgPath), "imgpath", "i", imgDefault, imgUsage)
 	flag.StringVarP(&(flagPhoBo.staticPath), "staticpath", "s", staticDefault, staticUsage)
+	flag.UintVarP(&(flagPhoBo.smallWidth), "thumbnail-width", "t", smallDefault, smallUsage)
 }
 
 func main() {
 	flag.Parse()
 	fmt.Printf("%+v\n", flagPhoBo)
-	mPhoBo := NewPhoBo()
+
+	mPhoBo := NewPhoBo(&flagPhoBo)
 	router := mux.NewRouter()
 
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(flagPhoBo.staticPath))))
-	router.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir(flagPhoBo.imgPath))))
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(mPhoBo.f.staticPath))))
+	router.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir(mPhoBo.f.imgPath))))
 
 	router.HandleFunc("/doPhoto", func(w http.ResponseWriter, r *http.Request) {
 		handleEventRoute(w, r, mPhoBo, "doPhoto",
@@ -300,7 +303,7 @@ func main() {
 
 	router.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string][]string{
-			"imageFiles": getImageFileNames(flagPhoBo.imgPath),
+			"imageFiles": getImageFileNames(mPhoBo.f.imgPath),
 		})
 	})
 
@@ -321,7 +324,7 @@ func main() {
 
 	srv := &http.Server{
 		Handler:      router,
-		Addr:         ":" + flagPhoBo.port,
+		Addr:         ":" + mPhoBo.f.port,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
