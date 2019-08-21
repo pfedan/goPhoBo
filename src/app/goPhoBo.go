@@ -24,9 +24,10 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
+// PhoBoFlags defines the setings that can be set via command-line flags
 type PhoBoFlags struct {
 	nameOfParty string
-	smallWidth  uint
+	thumbWidth  uint
 	port        string
 	imgPath     string
 	staticPath  string
@@ -79,7 +80,7 @@ func (d *PhoBo) beforeEvent(e *fsm.Event) {
 }
 
 func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
-	for i := 3.0; i > 0; i -= 1 {
+	for i := 3.0; i > 0; i-- {
 		ansi.CursorHorizontalAbsolute(1)
 		ansi.EraseInLine(0)
 		fmt.Printf("Countdown: %.1f\n", i)
@@ -109,7 +110,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		jpeg.Encode(fa, m, &o)
 
 		// also save a thumbnail
-		mThumbnail := resize.Resize(d.f.smallWidth, 0, m, resize.Bicubic)
+		mThumbnail := resize.Resize(d.f.thumbWidth, 0, m, resize.Bicubic)
 		fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
 		if errb != nil {
 			fmt.Println(errb)
@@ -138,7 +139,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 			log.Fatal(err)
 		}
 
-		mThumbnail := resize.Resize(d.f.smallWidth, 0, m, resize.Bicubic)
+		mThumbnail := resize.Resize(d.f.thumbWidth, 0, m, resize.Bicubic)
 		fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
 		if errb != nil {
 			fmt.Println(errb)
@@ -243,14 +244,14 @@ func init() {
 		imgUsage      = "Path to image files"
 		staticDefault = "static/"
 		staticUsage   = "Path to static webserver files"
-		smallDefault  = 240
-		smallUsage    = "Width of image thumbnails in px"
+		thumbDefault  = 240
+		thumbUsage    = "Width of image thumbnails in px"
 	)
 	flag.StringVarP(&(flagPhoBo.port), "port", "p", portDefault, portUsage)
 	flag.StringVarP(&(flagPhoBo.nameOfParty), "name", "n", nameDefault, nameUsage)
 	flag.StringVarP(&(flagPhoBo.imgPath), "imgpath", "i", imgDefault, imgUsage)
 	flag.StringVarP(&(flagPhoBo.staticPath), "staticpath", "s", staticDefault, staticUsage)
-	flag.UintVarP(&(flagPhoBo.smallWidth), "thumbnail-width", "t", smallDefault, smallUsage)
+	flag.UintVarP(&(flagPhoBo.thumbWidth), "thumbnail-width", "t", thumbDefault, thumbUsage)
 }
 
 func main() {

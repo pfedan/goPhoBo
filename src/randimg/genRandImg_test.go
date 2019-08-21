@@ -45,24 +45,38 @@ func TestGetImg(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want *image.RGBA
+		want image.Rectangle
 	}{
 		{
 			name: "noSeed",
-			args: args{o: RandImgOptions{H: 50, W: 50, Seed: 0}},
-			want: image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{50, 50}}), 
+			args: args{o: RandImgOptions{H: 50, W: 50}},
+			want: image.Rectangle{image.Point{0, 0}, image.Point{50, 50}},
 		},
 		{
 			name: "withSeed",
 			args: args{o: RandImgOptions{H: 800, W: 600, Seed: 1}},
-			want: image.NewRGBA(image.Rectangle{image.Point{0, 0}, image.Point{800, 600}}),
+			want: image.Rectangle{image.Point{0, 0}, image.Point{600, 800}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetImg(tt.args.o); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetImg() = %T, want %T", got, tt.want)
+			got := GetImg(tt.args.o)
+			switch tt.name {
+			case "noSeed":
+				if !reflect.DeepEqual(got.Rect, tt.want) {
+					t.Errorf("GetImg() = %v, want %v", got.Rect, tt.want)
+				}
+			case "withSeed":
+				if !reflect.DeepEqual(got.Rect, tt.want) {
+					t.Errorf("GetImg() = %v, want %v", got.Rect, tt.want)
+				}
 			}
 		})
+	}
+}
+
+func BenchmarkGetImg(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		GetImg(RandImgOptions{H: 600, W: 800})
 	}
 }
