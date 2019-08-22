@@ -174,14 +174,6 @@ func (d *PhoBo) emitEventAfter(e string, t time.Duration) {
 	d.FSM.Event(e)
 }
 
-func (d *PhoBo) listEventLinks() string {
-	var ret string
-	for _, v := range d.FSM.AvailableTransitions() {
-		ret += "<a href=\"" + v + "\">" + v + "</a> "
-	}
-	return ret
-}
-
 type responseStatus struct {
 	EventSuccess        bool     `json:"eventSuccess"`
 	CntPhotos           uint64   `json:"cntPhotos"`
@@ -265,29 +257,24 @@ func initEventRoutes(p *PhoBo, r *mux.Router) {
 		p.FSM.Event("doPhoto")
 		p.FSM.Event("beginDecide")
 		go p.decideForMeAfter(1 * time.Second)
-	},
-	})
+	}})
 
 	registerEventRoute(eventRouteInfo{router: r, route: "/deletePhoto", event: "deletePhoto", p: p, fPossible: func(p *PhoBo) {
 		p.FSM.Event("deletePhoto")
-	},
-	})
+	}})
 
 	registerEventRoute(eventRouteInfo{router: r, route: "/acceptPhoto", event: "acceptPhoto", p: p, fPossible: func(p *PhoBo) {
 		p.FSM.Event("acceptPhoto")
-	},
-	})
+	}})
 
 	registerEventRoute(eventRouteInfo{router: r, route: "/beginSmile", event: "beginSmile", p: p, fPossible: func(p *PhoBo) {
 		p.FSM.Event("beginSmile")
 		go p.emitEventAfter("endSmile", 3*time.Second)
-	},
-	})
+	}})
 
 	registerEventRoute(eventRouteInfo{router: r, route: "/endSmile", event: "endSmile", p: p, fPossible: func(p *PhoBo) {
 		p.FSM.Event("endSmile")
-	},
-	})
+	}})
 }
 
 func main() {
