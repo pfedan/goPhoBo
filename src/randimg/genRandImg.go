@@ -35,13 +35,17 @@ func (c *Circle) getColorAt(x, y float64) color.RGBA {
 }
 
 func GetImg(o RandImgOptions) *image.RGBA {
+	circs := make([]*Circle, 20)
+	m := image.NewRGBA(image.Rect(0, 0, o.W, o.H))
+
 	if o.Seed == 0 {
-		rand.Seed(time.Now().UTC().UnixNano())
+		mTime := time.Now()
+		mSeed := mTime.UnixNano()
+		rand.Seed(mSeed)
 	} else {
 		rand.Seed(o.Seed)
 	}
 
-	circs := make([]*Circle, 20)
 	for i := range circs {
 		circs[i] = &Circle{
 			X:     rand.Float64() * float64(o.W),
@@ -51,13 +55,10 @@ func GetImg(o RandImgOptions) *image.RGBA {
 			green: rand.Float64(),
 			blue:  rand.Float64(),
 		}
-
 	}
 
-	m := image.NewRGBA(image.Rect(0, 0, o.W, o.H))
 	for x := 0; x < o.W; x++ {
 		for y := 0; y < o.H; y++ {
-
 			var iCol, cCol color.RGBA
 			for _, v := range circs {
 				cCol = v.getColorAt(float64(x), float64(y))
@@ -77,7 +78,6 @@ func GetImg(o RandImgOptions) *image.RGBA {
 					iCol.B = 255
 				}
 			}
-
 			m.Set(x, y, iCol)
 		}
 	}

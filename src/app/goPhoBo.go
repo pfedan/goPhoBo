@@ -18,7 +18,6 @@ import (
 	"github.com/pfedan/goPhoBo/src/randimg"
 
 	"github.com/gorilla/mux"
-	"github.com/k0kubun/go-ansi"
 	"github.com/looplab/fsm"
 	"github.com/nfnt/resize"
 	flag "github.com/spf13/pflag"
@@ -81,16 +80,12 @@ func (d *PhoBo) beforeEvent(e *fsm.Event) {
 
 func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 	for i := 3.0; i > 0; i-- {
-		ansi.CursorHorizontalAbsolute(1)
-		ansi.EraseInLine(0)
 		fmt.Printf("Countdown: %.1f\n", i)
 		time.Sleep(1000 * time.Millisecond)
 	}
-
 	fname := time.Now().Format("2006-01-02T15-04-05.jpg")
 	newpath := filepath.Clean(filepath.Join(d.f.imgPath, "small"))
 	os.MkdirAll(newpath, os.ModePerm)
-
 	o := jpeg.Options{Quality: 90}
 	if runtime.GOOS == "windows" {
 		out, err := exec.Command("cmd", "/C", "echo I should have made a photo.").Output()
@@ -108,16 +103,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		}
 		defer fa.Close()
 		jpeg.Encode(fa, m, &o)
-
-		// also save a thumbnail
-		mThumbnail := resize.Resize(d.f.thumbWidth, 0, m, resize.Bicubic)
-		fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
-		if errb != nil {
-			fmt.Println(errb)
-			return
-		}
-		defer fb.Close()
-		jpeg.Encode(fb, mThumbnail, &o)
+		saveThumbnail(m, d, fname)
 	} else {
 		gphotoCmd := exec.Command("bash", "-c", "gphoto2 --auto-detect --capture-image-and-download --force-overwrite --filename "+d.f.imgPath+fname)
 		fmt.Println(gphotoCmd)
@@ -138,7 +124,14 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		saveThumbnail(m, d, fname)
+	}
+	d.cntPhotos++
+}
 
+func saveThumbnail(img image.Image, d *PhoBo, fname string) {
+	if m, ok := img.(*image.RGBA); ok {
+		o := jpeg.Options{Quality: 90}
 		mThumbnail := resize.Resize(d.f.thumbWidth, 0, m, resize.Bicubic)
 		fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
 		if errb != nil {
@@ -148,8 +141,6 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		defer fb.Close()
 		jpeg.Encode(fb, mThumbnail, &o)
 	}
-
-	d.cntPhotos++
 }
 
 func (d *PhoBo) cbDeletePhoto(e *fsm.Event) {
@@ -198,19 +189,34 @@ type responseStatus struct {
 	PossibleTransitions []string `json:"possibleTransitions"`
 }
 
+type eventRouteInfo struct {
+	router    *mux.Router
+	p         *PhoBo
+	event     string
+	route     string
+	fPossible func(*PhoBo)
+}
+
+func registerEventRoute(o eventRouteInfo) {
+	o.router.HandleFunc(o.route, func(w http.ResponseWriter, r *http.Request) {
+		handleEventRoute(w, r, o)
+	})
+}
+
 // handleEventRoute handles actions and response after a request
-func handleEventRoute(w http.ResponseWriter, r *http.Request, p *PhoBo, e string, fPossible func(*PhoBo)) {
-	possible := p.FSM.Can(e)
+func handleEventRoute(w http.ResponseWriter, r *http.Request, o eventRouteInfo) {
+	fsm := o.p.FSM
+	possible := fsm.Can(o.event)
 
 	if possible {
-		fPossible(p)
+		o.fPossible(o.p)
 	}
 
 	res := responseStatus{
 		EventSuccess:        possible,
-		CntPhotos:           p.cntPhotos,
-		CurrentState:        p.FSM.Current(),
-		PossibleTransitions: p.FSM.AvailableTransitions(),
+		CntPhotos:           o.p.cntPhotos,
+		CurrentState:        fsm.Current(),
+		PossibleTransitions: fsm.AvailableTransitions(),
 	}
 
 	json.NewEncoder(w).Encode(res)
@@ -254,6 +260,36 @@ func init() {
 	flag.UintVarP(&(flagPhoBo.thumbWidth), "thumbnail-width", "t", thumbDefault, thumbUsage)
 }
 
+func initEventRoutes(p *PhoBo, r *mux.Router) {
+	registerEventRoute(eventRouteInfo{router: r, route: "/doPhoto", event: "doPhoto", p: p, fPossible: func(p *PhoBo) {
+		p.FSM.Event("doPhoto")
+		p.FSM.Event("beginDecide")
+		go p.decideForMeAfter(1 * time.Second)
+	},
+	})
+
+	registerEventRoute(eventRouteInfo{router: r, route: "/deletePhoto", event: "deletePhoto", p: p, fPossible: func(p *PhoBo) {
+		p.FSM.Event("deletePhoto")
+	},
+	})
+
+	registerEventRoute(eventRouteInfo{router: r, route: "/acceptPhoto", event: "acceptPhoto", p: p, fPossible: func(p *PhoBo) {
+		p.FSM.Event("acceptPhoto")
+	},
+	})
+
+	registerEventRoute(eventRouteInfo{router: r, route: "/beginSmile", event: "beginSmile", p: p, fPossible: func(p *PhoBo) {
+		p.FSM.Event("beginSmile")
+		go p.emitEventAfter("endSmile", 3*time.Second)
+	},
+	})
+
+	registerEventRoute(eventRouteInfo{router: r, route: "/endSmile", event: "endSmile", p: p, fPossible: func(p *PhoBo) {
+		p.FSM.Event("endSmile")
+	},
+	})
+}
+
 func main() {
 	flag.Parse()
 	fmt.Printf("%+v\n", flagPhoBo)
@@ -261,46 +297,10 @@ func main() {
 	mPhoBo := NewPhoBo(&flagPhoBo)
 	router := mux.NewRouter()
 
+	initEventRoutes(mPhoBo, router)
+
 	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir(mPhoBo.f.staticPath))))
 	router.PathPrefix("/img/").Handler(http.StripPrefix("/img/", http.FileServer(http.Dir(mPhoBo.f.imgPath))))
-
-	router.HandleFunc("/doPhoto", func(w http.ResponseWriter, r *http.Request) {
-		handleEventRoute(w, r, mPhoBo, "doPhoto",
-			func(p *PhoBo) {
-				p.FSM.Event("doPhoto")
-				p.FSM.Event("beginDecide")
-				go p.decideForMeAfter(1 * time.Second)
-			})
-	})
-
-	router.HandleFunc("/deletePhoto", func(w http.ResponseWriter, r *http.Request) {
-		handleEventRoute(w, r, mPhoBo, "deletePhoto",
-			func(p *PhoBo) {
-				p.FSM.Event("deletePhoto")
-			})
-	})
-
-	router.HandleFunc("/acceptPhoto", func(w http.ResponseWriter, r *http.Request) {
-		handleEventRoute(w, r, mPhoBo, "acceptPhoto",
-			func(p *PhoBo) {
-				p.FSM.Event("acceptPhoto")
-			})
-	})
-
-	router.HandleFunc("/beginSmile", func(w http.ResponseWriter, r *http.Request) {
-		handleEventRoute(w, r, mPhoBo, "beginSmile",
-			func(p *PhoBo) {
-				p.FSM.Event("beginSmile")
-				go p.emitEventAfter("endSmile", 3*time.Second)
-			})
-	})
-
-	router.HandleFunc("/endSmile", func(w http.ResponseWriter, r *http.Request) {
-		handleEventRoute(w, r, mPhoBo, "endSmile",
-			func(p *PhoBo) {
-				p.FSM.Event("endSmile")
-			})
-	})
 
 	router.HandleFunc("/images", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string][]string{

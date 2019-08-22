@@ -1,0 +1,42 @@
+dist: trusty
+
+env:
+  global:
+    - CC_TEST_REPORTER_ID=$CC_TOKEN
+
+language: go
+
+notifications:
+  email: false
+
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
+
+script:
+ - go test -coverprofile c.out ${gobuild_args} ./...
+ - go get github.com/mattn/go-isatty
+ - env GOOS=linux GOARCH=arm GOARM=5 go build src/app/goPhoBo.go
+ - env GOOS=windows GOARCH=amd64 go build src/app/goPhoBo.go
+ - zip -r goPhoBo-win64.zip src/app/static
+ - zip -u goPhoBo-win64.zip goPhoBo.exe
+ - zip -r goPhoBo-raspi.zip src/app/static
+ - zip -u goPhoBo-raspi.zip goPhoBo
+ 
+after_script:
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
+  keep_history: true
+  file:
+  - goPhoBo-win64.zip
+  - goPhoBo-raspi.zip
+  on:
+    repo: pfedan/goPhoBo
+    tags: true
+
+
