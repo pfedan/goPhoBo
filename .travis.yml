@@ -10,10 +10,13 @@ notifications:
   email: false
 
 before_script:
-  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
-  - chmod +x ./cc-test-reporter
-  - ./cc-test-reporter before-build
-  - cp ./testfiles/gphoto2 ~/bin/gphoto2
+  - go get -v github.com/golang/dep/cmd/dep
+  - go get -v github.com/codeclimate/test-reporter
+  - cd $GOPATH/src/github.com/golang/dep/cmd/dep && git checkout tags/v0.4.1 && go install
+  - cd $GOPATH/src/github.com/codeclimate/test-reporter && git checkout tags/v0.4.3 && go install
+  - cd - && dep ensure -v -vendor-only
+  - test-reporter before-build
+  - cd $TRAVIS_BUILD_DIR && cp ./testfiles/gphoto2 ~/bin/gphoto2
   - chmod +x ~/bin/gphoto2
 
 script:
@@ -24,7 +27,7 @@ script:
  - env GOOS=windows GOARCH=amd64 go build goPhoBo.go
  
 after_script:
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 
 after_success:
  - zip -r goPhoBo-win64.zip static
