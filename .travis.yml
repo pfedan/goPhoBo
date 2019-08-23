@@ -20,8 +20,8 @@ script:
  - go test -coverprofile c.out ${gobuild_args} ./...
  - go get github.com/mattn/go-isatty
  - cd src/app/
- - env GOOS=linux GOARCH=arm GOARM=5 go build src/app/goPhoBo.go
- - env GOOS=windows GOARCH=amd64 go build src/app/goPhoBo.go
+ - env GOOS=linux GOARCH=arm GOARM=5 go build goPhoBo.go
+ - env GOOS=windows GOARCH=amd64 go build goPhoBo.go
  
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT

@@ -105,12 +105,10 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		jpeg.Encode(fa, m, &o)
 		saveThumbnail(m, d, fname)
 	} else {
-		fmt.Println(os.Getenv("PATH"))
 		gphotoCmd := exec.Command("bash", "-c", "gphoto2 --auto-detect --capture-image-and-download --force-overwrite --filename "+d.f.imgPath+fname)
-		fmt.Println(gphotoCmd)
 		out, err := gphotoCmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("   -> executed photo command. \n   -> Output: \n%s", out)
+			fmt.Printf("   -> executed photo command. \n   -> FAILED: Output: \n%s", out)
 			log.Fatal(err)
 		}
 		fmt.Printf("   -> executed photo command. \n   -> Output: \n%s", out)
