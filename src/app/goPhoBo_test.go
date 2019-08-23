@@ -62,10 +62,11 @@ func Test_routes(t *testing.T) {
 		name string
 		e    string
 	}{
-		{name: "doPhoto", e: "doPhoto"},
 		{name: "beginSmile", e: "beginSmile"},
 		{name: "endSmile", e: "endSmile"},
+		{name: "doPhoto", e: "doPhoto"},
 		{name: "acceptPhoto", e: "acceptPhoto"},
+		{name: "doPhoto", e: "doPhoto"},
 		{name: "deletePhoto", e: "deletePhoto"},
 		{name: "status", e: "status"},
 		{name: "images", e: "images"},

@@ -79,10 +79,6 @@ func (d *PhoBo) beforeEvent(e *fsm.Event) {
 }
 
 func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
-	for i := 3.0; i > 0; i-- {
-		fmt.Printf("Countdown: %.1f\n", i)
-		time.Sleep(1000 * time.Millisecond)
-	}
 	fname := time.Now().Format("2006-01-02T15-04-05.jpg")
 	newpath := filepath.Clean(filepath.Join(d.f.imgPath, "small"))
 	os.MkdirAll(newpath, os.ModePerm)
