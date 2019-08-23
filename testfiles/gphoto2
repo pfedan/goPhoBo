@@ -1,0 +1,3 @@
+#!/bin/bash
+
+cp "$TRAVIS_BUILD_DIR/testfiles/test.jpg" $5

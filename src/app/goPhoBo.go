@@ -105,10 +105,12 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		jpeg.Encode(fa, m, &o)
 		saveThumbnail(m, d, fname)
 	} else {
+		fmt.Println(os.Getenv("PATH"))
 		gphotoCmd := exec.Command("bash", "-c", "gphoto2 --auto-detect --capture-image-and-download --force-overwrite --filename "+d.f.imgPath+fname)
 		fmt.Println(gphotoCmd)
-		out, err := gphotoCmd.Output()
+		out, err := gphotoCmd.CombinedOutput()
 		if err != nil {
+			fmt.Printf("   -> executed photo command. \n   -> Output: \n%s", out)
 			log.Fatal(err)
 		}
 		fmt.Printf("   -> executed photo command. \n   -> Output: \n%s", out)
@@ -234,7 +236,7 @@ var flagPhoBo PhoBoFlags
 
 func init() {
 	const (
-		portDefault   = "http"
+		portDefault   = "8080"
 		portUsage     = "port for web-frontend"
 		nameDefault   = "PhoBo-Party"
 		nameUsage     = "Name of the Event"

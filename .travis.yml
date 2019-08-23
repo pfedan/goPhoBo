@@ -13,19 +13,24 @@ before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
+  - cp ./testfiles/gphoto2 ~/bin/gphoto2
+  - chmod +x ~/bin/gphoto2
 
 script:
  - go test -coverprofile c.out ${gobuild_args} ./...
  - go get github.com/mattn/go-isatty
+ - cd src/app/
  - env GOOS=linux GOARCH=arm GOARM=5 go build src/app/goPhoBo.go
  - env GOOS=windows GOARCH=amd64 go build src/app/goPhoBo.go
- - zip -r goPhoBo-win64.zip src/app/static
- - zip -u goPhoBo-win64.zip goPhoBo.exe
- - zip -r goPhoBo-raspi.zip src/app/static
- - zip -u goPhoBo-raspi.zip goPhoBo
  
 after_script:
   - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+
+after_success:
+ - zip -r goPhoBo-win64.zip static
+ - zip -u goPhoBo-win64.zip goPhoBo.exe
+ - zip -r goPhoBo-raspi.zip static
+ - zip -u goPhoBo-raspi.zip goPhoBo
 
 deploy:
   provider: releases
