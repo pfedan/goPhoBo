@@ -10,6 +10,20 @@ var currentState = '';
 var lastCountdownStart = 0;
 var tCal = 0;
 
+xmlhttp.onreadystatechange = getNewImageList;
+xmlhttp.open("GET", "../images", true);
+xmlhttp.send();
+
+autoRefresh();
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+span.onclick = function () {
+    modal.style.display = "none";
+}
+modal.onclick = function () {
+    modal.style.display = "none";
+}
 
 document.addEventListener("keypress", function onEvent(event) {
     if (event.key == "s") {
@@ -49,8 +63,8 @@ function showCountDown() {
     divCD.style.display = "block";
     setTimeout(function () { showCountdownNumber(3) }, 1000);
     setTimeout(function () { showCountdownNumber(2) }, 2000);
-    setTimeout(function () { showCountdownNumber(1) }, 3000),
-        setTimeout(function () { showCountdownNumber("Smile!") }, 4000);
+    setTimeout(function () { showCountdownNumber(1) }, 3000);
+    setTimeout(function () { showCountdownNumber("Smile!") }, 4000);
     setTimeout(function () { loadXMLDoc("../doPhoto", function () { }) }, 4000 - tCal);
     setTimeout(function () { divCD.style.display = "none" }, 5000);
 }
@@ -76,8 +90,6 @@ function loadXMLDoc(url, cfunc) {
     xmlhttpRefresh.send();
 }
 
-xmlhttp.onreadystatechange = getNewImageList;
-
 function getNewImageList() {
     if (this.readyState == 4 && this.status == 200) {
         var res = JSON.parse(this.responseText);
@@ -88,9 +100,6 @@ function getNewImageList() {
         //document.getElementById('json').innerHTML = JSON.stringify(res, undefined, 2);
     }
 }
-
-xmlhttp.open("GET", "../images", true);
-xmlhttp.send();
 
 function makeImageView(list) {
     //document.getElementById("gallery").innerHTML = '';
@@ -119,8 +128,6 @@ function makeImageView(list) {
     cntPhotos = list.length;
 }
 
-autoRefresh();
-
 function autoRefresh() {
     console.log("called autoRefresh")
     var target = document.getElementById('json');
@@ -138,16 +145,5 @@ function autoRefresh() {
             };
         });
     }
-
-
     setInterval(doRefresh, 350);
-}
-
-// Get the <span> element that closes the modal
-var span = document.getElementsByClassName("close")[0];
-span.onclick = function () {
-    modal.style.display = "none";
-}
-modal.onclick = function () {
-    modal.style.display = "none";
 }
