@@ -70,11 +70,11 @@ func NewPhoBo(pFlags *PhoBoFlags) *PhoBo {
 }
 
 func (d *PhoBo) enterState(e *fsm.Event) {
-	fmt.Printf("State changed from \"%s\" to \"%s\" \n", e.Src, e.Dst)
+	log.Printf("State changed from \"%s\" to \"%s\" \n", e.Src, e.Dst)
 }
 
 func (d *PhoBo) beforeEvent(e *fsm.Event) {
-	fmt.Printf("New event: \"%s\"\n", e.Event)
+	log.Printf("New event: \"%s\"\n", e.Event)
 
 }
 
@@ -88,7 +88,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("   -> executed photo command. \n   -> Output: %s", out)
+		log.Printf("Executed photo command. \n   -> Output: %s", out)
 
 		m := randimg.GetImg(randimg.RandImgOptions{W: 800, H: 600})
 
@@ -104,10 +104,10 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		gphotoCmd := exec.Command("bash", "-c", "gphoto2 --auto-detect --capture-image-and-download --force-overwrite --filename "+d.f.imgPath+fname)
 		out, err := gphotoCmd.CombinedOutput()
 		if err != nil {
-			fmt.Printf("   -> executed photo command. \n   -> FAILED: Output: \n%s", out)
+			log.Printf("Executed photo command. \n   -> FAILED: Output: \n%s", out)
 			log.Fatal(err)
 		}
-		fmt.Printf("   -> executed photo command. \n   -> Output: \n%s", out)
+		log.Printf("Executed photo command. \n   -> Output: \n%s", out)
 
 		// open new photo
 		fa, err := os.Open(d.f.imgPath + fname)
