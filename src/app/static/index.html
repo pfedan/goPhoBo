@@ -17,6 +17,10 @@
 
     </div>
 
+    <div id="countdown">
+        <div id="countdown_content"></div>
+    </div>
+
     <div id="status">
         <pre id="json"></pre>
     </div>
@@ -34,6 +38,10 @@
         var cntPhotos = 0;
         var currentState = '';
 
+        var lastCountdownStart = 0;
+        var tCal = 0;
+
+
         document.addEventListener("keypress", function onEvent(event) {
             if (event.key == "s") {
                 var statusBox = document.getElementById('status')
@@ -49,10 +57,38 @@
                 } else {
                     stateBox.style.display = "block"
                 }
-            } else if (event.key == "p" || event.key == " ") {
-                loadXMLDoc("../doPhoto", function () { })
+            } else if (event.key == "p") {
+                showCountDown()
+            } else if (event.key == "c") {
+                var d = new Date();
+                tCal = d.getTime() - lastCountdownStart - 4000;
+                console.log("tCal: " + tCal);
+            } else if (event.key == "!"){
+                if (confirm("This will delete ALL photos. Please confirm to proceed.")) {
+                    loadXMLDoc("../deleteAll", function (){});
+                    location.reload();
+                }
             }
         });
+
+        function showCountDown() {
+            var d = new Date();
+            lastCountdownStart = d.getTime();
+            var divCD = document.getElementById("countdown");
+            var divCDNum = document.getElementById("countdown_content");
+            divCDNum.innerHTML = "4";
+            divCD.style.display = "block";
+            setTimeout(function () { showCountdownNumber(3) }, 1000);
+            setTimeout(function () { showCountdownNumber(2) }, 2000);
+            setTimeout(function () { showCountdownNumber(1) }, 3000),
+            setTimeout(function () { showCountdownNumber("Smile!") }, 4000);
+            setTimeout(function () { loadXMLDoc("../doPhoto", function () { }) }, 4000 - tCal);
+            setTimeout(function () { divCD.style.display = "none" }, 5000);
+        }
+        function showCountdownNumber(num) {
+            var divCDNum = document.getElementById("countdown_content");
+            divCDNum.innerHTML = num.toString();
+        }
 
         function loadXMLDoc(url, cfunc) {
             //Code to catch modern browsers

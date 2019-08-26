@@ -301,6 +301,12 @@ func main() {
 		json.NewEncoder(w).Encode(res)
 	})
 
+	router.HandleFunc("/deleteAll", func(w http.ResponseWriter, r *http.Request) {
+		n := len(getImageFileNames(mPhoBo.f.imgPath))
+		os.RemoveAll(mPhoBo.f.imgPath)
+		log.Printf("All %v images in %s have been deleted.\n", n, mPhoBo.f.imgPath)
+	})
+
 	router.HandleFunc("/quit", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]bool{"commandSuccess": true})
 		os.Exit(0)
