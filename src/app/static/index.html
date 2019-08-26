@@ -63,6 +63,11 @@
                 var d = new Date();
                 tCal = d.getTime() - lastCountdownStart - 4000;
                 console.log("tCal: " + tCal);
+            } else if (event.key == "!"){
+                if (confirm("This will delete ALL photos. Please confirm to proceed.")) {
+                    loadXMLDoc("../deleteAll", function (){});
+                    location.reload();
+                }
             }
         });
 
