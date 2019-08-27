@@ -102,16 +102,15 @@ function loadXMLDoc(url, cfunc) {
 function getNewImageList() {
     if (this.readyState == 4 && this.status == 200) {
         var res = JSON.parse(this.responseText);
-        if ("imageFiles" in res && res.imageFiles.length != cntPhotos && currentState == 'home') {
-            console.log(res.imageFiles[0]);
-            makeImageView(res.imageFiles);
+        if (Array.isArray(res.imageFiles) && currentState == 'home') {
+            if (res.imageFiles.length != cntPhotos) {
+                makeImageView(res.imageFiles);
+            }
         }
-        //document.getElementById('json').innerHTML = JSON.stringify(res, undefined, 2);
     }
 }
 
 function makeImageView(list) {
-    //document.getElementById("gallery").innerHTML = '';
     var i;
     for (i = cntPhotos; i < list.length; i++) {
         var node = document.createElement("DIV");
