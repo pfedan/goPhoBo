@@ -28,20 +28,10 @@ modal.onclick = function () {
 document.addEventListener("keypress", function onEvent(event) {
     switch (event.key) {
         case "s":
-            var statusBox = document.getElementById('status')
-            if (statusBox.style.display == "block") {
-                statusBox.style.display = "none";
-            } else {
-                statusBox.style.display = "block"
-            }
+            toggleElementVisibility('status');
             break;
         case "a":
-            var stateBox = document.getElementById('currentState')
-            if (stateBox.style.display == "block") {
-                stateBox.style.display = "none";
-            } else {
-                stateBox.style.display = "block"
-            }
+            toggleElementVisibility('currentState')
             break;
         case "p":
             showCountDown();
@@ -64,6 +54,15 @@ document.addEventListener("keypress", function onEvent(event) {
             console.log("Unregistered key-event:\'" + event.key + "\'.")
     }
 });
+
+function toggleElementVisibility(element) {
+    var mNode = document.getElementById(element)
+    if (mNode.style.display == "block") {
+        mNode.style.display = "none";
+    } else {
+        mNode.style.display = "block"
+    }
+}
 
 function showCountDown() {
     var d = new Date();
