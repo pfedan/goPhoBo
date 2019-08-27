@@ -304,6 +304,7 @@ func main() {
 	router.HandleFunc("/deleteAll", func(w http.ResponseWriter, r *http.Request) {
 		n := len(getImageFileNames(mPhoBo.f.imgPath))
 		os.RemoveAll(mPhoBo.f.imgPath)
+		mPhoBo.cntPhotos = 0
 		log.Printf("All %v images in %s have been deleted.\n", n, mPhoBo.f.imgPath)
 	})
 

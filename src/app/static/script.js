@@ -65,9 +65,11 @@ function toggleElementVisibility(element) {
 }
 
 function showCountDown() {
+    var divCD = document.getElementById("countdown");
+    if (divCD.style.display == "block") { return; }
+
     var d = new Date();
     lastCountdownStart = d.getTime();
-    var divCD = document.getElementById("countdown");
     divCD.style.display = "block";
     setTimeout(function () { showCountdownNumber(4) }, 0);
     setTimeout(function () { showCountdownNumber(3) }, 1000);
@@ -103,24 +105,22 @@ function getNewImageList() {
     if (this.readyState == 4 && this.status == 200) {
         var res = JSON.parse(this.responseText);
         if (Array.isArray(res.imageFiles) && currentState == 'home') {
-            if (res.imageFiles.length != cntPhotos) {
-                makeImageView(res.imageFiles);
-            }
+            makeImageView(res.imageFiles);
         }
     }
 }
 
 function makeImageView(list) {
+    if (list.length == cntPhotos) { return; }
+
     var i;
     for (i = cntPhotos; i < list.length; i++) {
         var node = document.createElement("DIV");
-        node.innerHTML = '<div class="polaroid">' + //'<a href="../img/' + list[i] + '">' +
-            '<img class="myImg" src="../img/small/' + list[i] + '" alt="' + list[i] + '">' + //'</a>' +
+        node.innerHTML = '<div class="polaroid">' +
+            '<img class="myImg" src="../img/small/' + list[i] + '" alt="' + list[i] + '">' +
             '<div class="container">' +
-            //'<p>' + list[i] + '</p>' +
             '</div>' +
             '</div>';
-
         document.getElementById("gallery").appendChild(node);
         var polaroids = document.getElementsByClassName("polaroid");
         polaroids[polaroids.length - 1].style.transform = "rotate(" + (Math.floor(Math.random() * 20) - 10).toString() + "deg)";
