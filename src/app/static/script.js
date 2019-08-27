@@ -26,31 +26,42 @@ modal.onclick = function () {
 }
 
 document.addEventListener("keypress", function onEvent(event) {
-    if (event.key == "s") {
-        var statusBox = document.getElementById('status')
-        if (statusBox.style.display == "block") {
-            statusBox.style.display = "none";
-        } else {
-            statusBox.style.display = "block"
-        }
-    } else if (event.key == "a") {
-        var stateBox = document.getElementById('currentState')
-        if (stateBox.style.display == "block") {
-            stateBox.style.display = "none";
-        } else {
-            stateBox.style.display = "block"
-        }
-    } else if (event.key == "p") {
-        showCountDown()
-    } else if (event.key == "c") {
-        var d = new Date();
-        tCal = d.getTime() - lastCountdownStart - 4000;
-        console.log("tCal: " + tCal);
-    } else if (event.key == "!") {
-        if (confirm("This will delete ALL photos. Please confirm to proceed.")) {
-            loadXMLDoc("../deleteAll", function () { });
-            location.reload();
-        }
+    switch (event.key) {
+        case "s":
+            var statusBox = document.getElementById('status')
+            if (statusBox.style.display == "block") {
+                statusBox.style.display = "none";
+            } else {
+                statusBox.style.display = "block"
+            }
+            break;
+        case "a":
+            var stateBox = document.getElementById('currentState')
+            if (stateBox.style.display == "block") {
+                stateBox.style.display = "none";
+            } else {
+                stateBox.style.display = "block"
+            }
+            break;
+        case "p":
+            showCountDown();
+            break;
+        case "c":
+            var d = new Date();
+            tCal = d.getTime() - lastCountdownStart - 4000;
+            if (Math.abs(tCal) > 2000) {
+                tCal = 0;
+            }
+            console.log("tCal: " + tCal);
+            break;
+        case "!":
+            if (confirm("This will delete ALL photos. Please confirm to proceed.")) {
+                loadXMLDoc("../deleteAll", function () { });
+                location.reload();
+            }
+            break;
+        default:
+            console.log("Unregistered key-event:\'" + event.key + "\'.")
     }
 });
 
@@ -58,9 +69,8 @@ function showCountDown() {
     var d = new Date();
     lastCountdownStart = d.getTime();
     var divCD = document.getElementById("countdown");
-    var divCDNum = document.getElementById("countdown_content");
-    divCDNum.innerHTML = "4";
     divCD.style.display = "block";
+    setTimeout(function () { showCountdownNumber(4) }, 0);
     setTimeout(function () { showCountdownNumber(3) }, 1000);
     setTimeout(function () { showCountdownNumber(2) }, 2000);
     setTimeout(function () { showCountdownNumber(1) }, 3000);
