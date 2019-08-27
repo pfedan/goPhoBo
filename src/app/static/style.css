@@ -1,8 +1,12 @@
+html {
+    height: 100%;
+}
+
 body {
     margin: 100px;
     height: 100%;
     background-image: radial-gradient(#777777, #000);
-    background-repeat: no-repeat;
+    background-repeat: repeat;
     background-attachment: fixed;
 }
 
