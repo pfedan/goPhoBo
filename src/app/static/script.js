@@ -33,6 +33,12 @@ document.addEventListener("keypress", function onEvent(event) {
         case "a":
             toggleElementVisibility('currentState')
             break;
+        case "y":
+            acceptPhoto();
+            break;
+        case "n":
+            deletePhoto();
+            break;
         case "p":
             showCountDownAndMakePhoto();
             break;
@@ -56,20 +62,30 @@ document.addEventListener("keypress", function onEvent(event) {
 });
 
 function handleRemoteCommand(cmd) {
+    loadXMLDoc("../status/remoteCommand/nothing", function () { })
     switch (cmd) {
         case "nothing":
             break;
         case "doPhoto":
-            loadXMLDoc("../status/remoteCommand/nothing", function () { })
             showCountDownAndMakePhoto();
             break;
         case "beginSmile":
             break;
         case "acceptPhoto":
+            acceptPhoto();
             break;
         case "deletePhoto":
+            deletePhoto();
             break;
     }
+}
+
+function acceptPhoto() {
+    loadXMLDoc("../acceptPhoto", function () { });
+}
+
+function deletePhoto() {
+    loadXMLDoc("../deletePhoto", function () { });
 }
 
 function toggleElementVisibility(element) {
