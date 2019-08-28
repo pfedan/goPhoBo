@@ -1,0 +1,58 @@
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    background-image: radial-gradient(#777777, #000);
+    background-repeat: repeat;
+    background-attachment: fixed;
+}
+
+#controls {
+    margin: 100px;
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 10px;
+    row-gap: 10px;
+    vertical-align: middle;
+    color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 40pt;
+}
+
+.control-item {
+    width: 100%;
+    height: 100%;
+    min-height: 250px;
+    text-align: center;
+    border-radius: 50%;
+}
+
+#doPhoto {
+    background-image: radial-gradient(rgba(2, 0, 150,0.5), rgba(0, 0, 0, 0));
+}
+
+#acceptPhoto {
+    background-image: radial-gradient(rgba(0, 99, 25,0.5), rgba(0, 0, 0, 0));
+}
+
+#deletePhoto {
+    background-image: radial-gradient( rgba(99, 0, 0,0.5), rgba(0, 0, 0, 0));
+}
+
+#beginSmile {
+    background-image: radial-gradient( rgba(177, 121, 0,0.5), rgba(0, 0, 0, 0));
+}
+
+.control-item div {
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@media only screen and (max-width: 1200px) {
+    #controls {
+        grid-template-columns: auto;
+    }
+}
