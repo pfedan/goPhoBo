@@ -27,6 +27,22 @@ modal.onclick = function () {
 
 document.addEventListener("keypress", function onEvent(event) {
     switch (event.key) {
+        case "1":
+            if (currentState == "home") {
+                showCountDownAndMakePhoto()
+            }
+            else if (currentState == "decide") {
+                acceptPhoto();
+            }
+            break;
+        case "2":
+            if (currentState == "home") {
+                beginSmile()
+            }
+            else if (currentState == "decide") {
+                deletePhoto();
+            }
+            break;
         case "s":
             toggleElementVisibility('status');
             break;
@@ -70,6 +86,7 @@ function handleRemoteCommand(cmd) {
             showCountDownAndMakePhoto();
             break;
         case "beginSmile":
+            beginSmile();
             break;
         case "acceptPhoto":
             acceptPhoto();
@@ -86,6 +103,10 @@ function acceptPhoto() {
 
 function deletePhoto() {
     loadXMLDoc("../deletePhoto", function () { });
+}
+
+function beginSmile() {
+    loadXMLDoc("../beginSmile", function () { });
 }
 
 function toggleElementVisibility(element) {
