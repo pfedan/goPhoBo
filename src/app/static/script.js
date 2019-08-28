@@ -5,7 +5,9 @@ var xmlhttp = new XMLHttpRequest();
 var xmlhttpRefresh = new XMLHttpRequest();
 
 var cntPhotos = 0;
+var latestImageName = '';
 var currentState = '';
+var newState = '';
 
 var lastCountdownStart = 0;
 var tCal = 0;
@@ -16,13 +18,57 @@ xmlhttp.send();
 
 autoRefresh();
 
-// Get the <span> element that closes the modal
-var span = document.getElementsByClassName("close")[0];
-span.onclick = function () {
-    modal.style.display = "none";
+var closeModal = document.getElementById("closeModal");
+closeModal.onclick = function () {
+    if (currentState == "home") {
+        hideElement("myModal")
+    }
 }
 modal.onclick = function () {
-    modal.style.display = "none";
+    if (currentState == "home") {
+        hideElement("myModal")
+    }
+}
+
+document.getElementById("btnAccept").onclick = function () {
+    acceptPhoto();
+}
+
+document.getElementById("btnDismiss").onclick = function () {
+    deletePhoto();
+}
+
+function acceptPhoto() {
+    hideElement("myModal");
+    loadXMLDoc("../acceptPhoto", function () { });
+}
+
+function deletePhoto() {
+    hideElement("myModal");
+    loadXMLDoc("../deletePhoto", function () { });
+}
+
+function beginSmile() {
+    loadXMLDoc("../beginSmile", function () { });
+}
+
+function toggleElementVisibility(element) {
+    var mNode = document.getElementById(element)
+    if (mNode.style.display == "block") {
+        mNode.style.display = "none";
+    } else {
+        mNode.style.display = "block"
+    }
+}
+
+function showElement(element) {
+    var mNode = document.getElementById(element)
+    mNode.style.display = "block"
+}
+
+function hideElement(element) {
+    var mNode = document.getElementById(element)
+    mNode.style.display = "none"
 }
 
 document.addEventListener("keypress", function onEvent(event) {
@@ -97,25 +143,30 @@ function handleRemoteCommand(cmd) {
     }
 }
 
-function acceptPhoto() {
-    loadXMLDoc("../acceptPhoto", function () { });
-}
+function handleNewState() {
+    if (newState == currentState) { return; }
 
-function deletePhoto() {
-    loadXMLDoc("../deletePhoto", function () { });
-}
+    switch (newState) {
+        case "home":
+            hideElement("decisionInstruction");
+            break;
+        case "decide":
+            loadXMLDoc("../images",
+                function () {
+                    getNewImageList();
+                    showElement("decisionInstruction");
+                    showCountdownNumber("");
+                    hideElement("countdown");
+                    modal.style.display = "flex";
+                    modalImg.src = "../img/" + latestImageName;
+                }
+            )
+            break;
+        default:
 
-function beginSmile() {
-    loadXMLDoc("../beginSmile", function () { });
-}
-
-function toggleElementVisibility(element) {
-    var mNode = document.getElementById(element)
-    if (mNode.style.display == "block") {
-        mNode.style.display = "none";
-    } else {
-        mNode.style.display = "block"
+            break;
     }
+    currentState = newState;
 }
 
 function showCountDownAndMakePhoto() {
@@ -131,10 +182,6 @@ function showCountDownAndMakePhoto() {
     setTimeout(function () { showCountdownNumber(1) }, 3000);
     setTimeout(function () { showCountdownNumber("Smile") }, 4000);
     setTimeout(function () { loadXMLDoc("../doPhoto", function () { }) }, 4000 - tCal);
-    setTimeout(function () {
-        showCountdownNumber("");
-        divCD.style.display = "none";
-    }, 5000);
 }
 function showCountdownNumber(num) {
     var divCDNum = document.getElementById("countdown_content");
@@ -161,6 +208,11 @@ function loadXMLDoc(url, cfunc) {
 function getNewImageList() {
     if (this.readyState == 4 && this.status == 200) {
         var res = JSON.parse(this.responseText);
+
+        if (Array.isArray(res.imageFiles)) {
+            latestImageName = res.imageFiles.slice(-1)[0];
+        }
+
         if (Array.isArray(res.imageFiles) && currentState == 'home') {
             makeImageView(res.imageFiles);
         }
@@ -205,10 +257,11 @@ function autoRefresh() {
             if (xmlhttpRefresh.readyState == 4 && xmlhttpRefresh.status == 200) {
                 var res = JSON.parse(xmlhttpRefresh.responseText);
                 target.innerHTML = JSON.stringify(res, undefined, 2);
-                currentState = res.currentState;
-                document.getElementById('currentState').innerHTML = currentState;
+                newState = res.currentState;
+                document.getElementById('currentState').innerHTML = newState;
 
                 handleRemoteCommand(res.remoteCommand);
+                handleNewState();
             };
         });
     }

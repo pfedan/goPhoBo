@@ -75,7 +75,7 @@ div.container {
 
 .modalPolaroid {
     display: inline-block;
-    width:50%;
+    width: 50%;
     max-width: 90%;
     max-height: 90%;
 }
@@ -121,8 +121,6 @@ div.container {
     /* Stay in place */
     z-index: 1;
     /* Sit on top */
-    padding-top: 100px;
-    /* Location of the box */
     left: 0;
     top: 0;
     width: 100%;
@@ -144,17 +142,17 @@ div.container {
     display: block;
 }
 
-/* Caption of Modal Image */
+#decisionInstruction {
+    background-color: #777777;
+    color: #000;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 50pt;
+    padding: 30px;
+    display: none;
+}
 
-#caption {
-    margin: auto;
-    display: block;
-    width: 80%;
-    max-width: 700px;
-    text-align: center;
-    color: #ccc;
-    padding: 10px 0;
-    height: 150px;
+#decisionInstruction div {
+    float: left;
 }
 
 /* Add Animation */
@@ -206,6 +204,19 @@ div.container {
     color: #bbb;
     text-decoration: none;
     cursor: pointer;
+}
+
+.button {
+    cursor: pointer;
+    transition: 0.3s;
+    background: none;
+}
+
+#btnAccept:hover {
+    color: rgba(0, 99, 25,0.5);
+}
+#btnDismiss:hover {
+    color: rgba(99, 0, 0,0.5);
 }
 
 /* 100% Image Width on Smaller Screens */
