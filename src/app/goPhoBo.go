@@ -37,6 +37,7 @@ type PhoBo struct {
 	FSM           *fsm.FSM
 	cntPhotos     uint64
 	remoteCommand string
+	lastImageName string
 	f             *PhoBoFlags
 }
 
@@ -66,6 +67,7 @@ func NewPhoBo(pFlags *PhoBoFlags) *PhoBo {
 	)
 
 	d.remoteCommand = "nothing"
+	d.lastImageName = ""
 	d.cntPhotos = uint64(len(getImageFileNames(d.f.imgPath)))
 
 	return d
@@ -124,7 +126,7 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		}
 		saveThumbnail(m, d, fname)
 	}
-	d.cntPhotos++
+	d.lastImageName = fname
 }
 
 func saveThumbnail(img image.Image, d *PhoBo, fname string) {
@@ -142,11 +144,20 @@ func saveThumbnail(img image.Image, d *PhoBo, fname string) {
 }
 
 func (d *PhoBo) cbDeletePhoto(e *fsm.Event) {
+	err := os.Remove(d.f.imgPath + d.lastImageName)
+	if err != nil {
+		log.Println("Could not delete file:", d.f.imgPath+d.lastImageName)
+	}
+	err = os.Remove(d.f.imgPath + "small/" + d.lastImageName)
+	if err != nil {
+		log.Println("Could not delete file:", d.f.imgPath+"small/"+d.lastImageName)
+	}
 
+	d.lastImageName = ""
 }
 
 func (d *PhoBo) cbAcceptPhoto(e *fsm.Event) {
-
+	d.cntPhotos++
 }
 
 func (d *PhoBo) cbBeginSmile(e *fsm.Event) {
