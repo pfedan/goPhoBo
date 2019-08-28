@@ -275,7 +275,7 @@ func initEventRoutes(p *PhoBo, r *mux.Router) {
 	registerEventRoute(eventRouteInfo{router: r, route: "/doPhoto", event: "doPhoto", p: p, fPossible: func(p *PhoBo) {
 		p.FSM.Event("doPhoto")
 		p.FSM.Event("beginDecide")
-		go p.decideForMeAfter(1 * time.Second)
+		//go p.decideForMeAfter(1 * time.Second)
 	}})
 
 	registerEventRoute(eventRouteInfo{router: r, route: "/deletePhoto", event: "deletePhoto", p: p, fPossible: func(p *PhoBo) {

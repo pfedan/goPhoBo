@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="remotecontrol.css">
+</head>
+
+<body>
+    <div id="controls">
+        <div id="doPhoto" class="control-item">
+            <div>PHOTO</div>
+        </div>
+        <div id="acceptPhoto" class="control-item">
+            <div>ACCEPT</div>
+        </div>
+        <div id="deletePhoto" class="control-item">
+            <div>DELETE</div>
+        </div>
+        <div id="beginSmile" class="control-item">
+            <div>SMILE</div>
+        </div>
+    </div>
+
+    <script>
+        var xmlhttpRefresh = new XMLHttpRequest();
+
+        var currentState = '';
+        var newState = '';
+        var remoteCommand = '';
+        
+        var btnPhoto = document.getElementById("doPhoto");
+        var btnAccept = document.getElementById("acceptPhoto");
+        var btnDelete = document.getElementById("deletePhoto");
+        var btnSmile = document.getElementById("beginSmile");
+
+        btnPhoto.onclick = function () {
+            loadXMLDoc("../status/remoteCommand/doPhoto")
+        }
+        btnAccept.onclick = function () {
+            loadXMLDoc("../status/remoteCommand/acceptPhoto")
+        }
+        btnDelete.onclick = function () {
+            loadXMLDoc("../status/remoteCommand/deletePhoto")
+        }
+        btnSmile.onclick = function () {
+            loadXMLDoc("../status/remoteCommand/beginSmile")
+        }
+
+        checkControlVisibility();
+        autoRefresh();
+
+        function showElement(element) {
+            var mNode = document.getElementById(element)
+            mNode.style.display = "block"
+        }
+
+        function hideElement(element) {
+            var mNode = document.getElementById(element)
+            mNode.style.display = "none"
+        }
+
+        function checkControlVisibility() {
+            if (newState == currentState) { return; }
+
+            switch (newState) {
+                case "home":
+                    showElement("doPhoto")
+                    showElement("beginSmile")
+                    hideElement("acceptPhoto")
+                    hideElement("deletePhoto")
+                    break;
+                case "decide":
+                    hideElement("doPhoto")
+                    hideElement("beginSmile")
+                    showElement("acceptPhoto")
+                    showElement("deletePhoto")
+                    break;
+
+                default:
+                    hideElement("doPhoto")
+                    hideElement("beginSmile")
+                    hideElement("acceptPhoto")
+                    hideElement("deletePhoto")
+                    break;
+            }
+
+            newState = currentState;
+        }
+
+        function autoRefresh() {
+            var doRefresh = function () {
+                loadXMLDoc('../status', function () {
+                    if (xmlhttpRefresh.readyState == 4 && xmlhttpRefresh.status == 200) {
+                        var res = JSON.parse(xmlhttpRefresh.responseText);
+                        newState = res.currentState;
+                        remoteCommand = res.remoteCommand;
+                        checkControlVisibility();
+                    };
+                });
+            }
+            setInterval(doRefresh, 500);
+        }
+
+        function loadXMLDoc(url,cfunc) {
+            if (window.XMLHttpRequest) {
+                xmlhttpRefresh = new XMLHttpRequest();
+            }
+            else {
+                xmlhttpRefresh = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            xmlhttpRefresh.onreadystatechange = cfunc;
+            xmlhttpRefresh.open("GET", url, true);
+            xmlhttpRefresh.send();
+        }
+    </script>
+</body>
+
+</html>
