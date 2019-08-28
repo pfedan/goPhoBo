@@ -34,7 +34,7 @@ document.addEventListener("keypress", function onEvent(event) {
             toggleElementVisibility('currentState')
             break;
         case "p":
-            showCountDown();
+            showCountDownAndMakePhoto();
             break;
         case "c":
             var d = new Date();
@@ -55,6 +55,23 @@ document.addEventListener("keypress", function onEvent(event) {
     }
 });
 
+function handleRemoteCommand(cmd) {
+    switch (cmd) {
+        case "nothing":
+            break;
+        case "doPhoto":
+            loadXMLDoc("../status/remoteCommand/nothing", function () { })
+            showCountDownAndMakePhoto();
+            break;
+        case "beginSmile":
+            break;
+        case "acceptPhoto":
+            break;
+        case "deletePhoto":
+            break;
+    }
+}
+
 function toggleElementVisibility(element) {
     var mNode = document.getElementById(element)
     if (mNode.style.display == "block") {
@@ -64,7 +81,7 @@ function toggleElementVisibility(element) {
     }
 }
 
-function showCountDown() {
+function showCountDownAndMakePhoto() {
     var divCD = document.getElementById("countdown");
     if (divCD.style.display == "block") { return; }
 
@@ -75,9 +92,12 @@ function showCountDown() {
     setTimeout(function () { showCountdownNumber(3) }, 1000);
     setTimeout(function () { showCountdownNumber(2) }, 2000);
     setTimeout(function () { showCountdownNumber(1) }, 3000);
-    setTimeout(function () { showCountdownNumber("Smile!") }, 4000);
+    setTimeout(function () { showCountdownNumber("Smile") }, 4000);
     setTimeout(function () { loadXMLDoc("../doPhoto", function () { }) }, 4000 - tCal);
-    setTimeout(function () { divCD.style.display = "none" }, 5000);
+    setTimeout(function () {
+        showCountdownNumber("");
+        divCD.style.display = "none";
+    }, 5000);
 }
 function showCountdownNumber(num) {
     var divCDNum = document.getElementById("countdown_content");
@@ -150,6 +170,8 @@ function autoRefresh() {
                 target.innerHTML = JSON.stringify(res, undefined, 2);
                 currentState = res.currentState;
                 document.getElementById('currentState').innerHTML = currentState;
+
+                handleRemoteCommand(res.remoteCommand);
             };
         });
     }
