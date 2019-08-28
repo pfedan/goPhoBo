@@ -34,9 +34,10 @@ type PhoBoFlags struct {
 
 // PhoBo structure, containing all needed stuff
 type PhoBo struct {
-	FSM       *fsm.FSM
-	cntPhotos uint64
-	f         *PhoBoFlags
+	FSM           *fsm.FSM
+	cntPhotos     uint64
+	remoteCommand string
+	f             *PhoBoFlags
 }
 
 // NewPhoBo is an initializer function for a PhoBo
@@ -64,6 +65,7 @@ func NewPhoBo(pFlags *PhoBoFlags) *PhoBo {
 		},
 	)
 
+	d.remoteCommand = "nothing"
 	d.cntPhotos = uint64(len(getImageFileNames(d.f.imgPath)))
 
 	return d
@@ -175,6 +177,7 @@ type responseStatus struct {
 	CntPhotos           uint64   `json:"cntPhotos"`
 	CurrentState        string   `json:"currentState"`
 	PossibleTransitions []string `json:"possibleTransitions"`
+	RemoteCommand       string   `json:"remoteCommand"`
 }
 
 type eventRouteInfo struct {
@@ -205,6 +208,7 @@ func handleEventRoute(w http.ResponseWriter, r *http.Request, o eventRouteInfo) 
 		CntPhotos:           o.p.cntPhotos,
 		CurrentState:        fsm.Current(),
 		PossibleTransitions: fsm.AvailableTransitions(),
+		RemoteCommand:       o.p.remoteCommand,
 	}
 
 	json.NewEncoder(w).Encode(res)
@@ -226,7 +230,26 @@ func getImageFileNames(path string) []string {
 	return list
 }
 
+func getStatus(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	if id := params["id"]; id != "" {
+		if id == "remoteCommand" {
+			mPhoBo.remoteCommand = params["val"]
+		}
+	}
+
+	res := responseStatus{
+		CntPhotos:           mPhoBo.cntPhotos,
+		CurrentState:        mPhoBo.FSM.Current(),
+		PossibleTransitions: mPhoBo.FSM.AvailableTransitions(),
+		RemoteCommand:       mPhoBo.remoteCommand,
+	}
+
+	json.NewEncoder(w).Encode(res)
+}
+
 var flagPhoBo PhoBoFlags
+var mPhoBo *PhoBo
 
 func init() {
 	const (
@@ -277,7 +300,7 @@ func main() {
 	flag.Parse()
 	fmt.Printf("%+v\n", flagPhoBo)
 
-	mPhoBo := NewPhoBo(&flagPhoBo)
+	mPhoBo = NewPhoBo(&flagPhoBo)
 	router := mux.NewRouter()
 
 	initEventRoutes(mPhoBo, router)
@@ -291,15 +314,8 @@ func main() {
 		})
 	})
 
-	router.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		res := responseStatus{
-			CntPhotos:           mPhoBo.cntPhotos,
-			CurrentState:        mPhoBo.FSM.Current(),
-			PossibleTransitions: mPhoBo.FSM.AvailableTransitions(),
-		}
-
-		json.NewEncoder(w).Encode(res)
-	})
+	router.HandleFunc("/status", getStatus)
+	router.HandleFunc("/status/{id}/{val}", getStatus).Methods("GET")
 
 	router.HandleFunc("/deleteAll", func(w http.ResponseWriter, r *http.Request) {
 		n := len(getImageFileNames(mPhoBo.f.imgPath))
