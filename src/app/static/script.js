@@ -102,7 +102,7 @@ document.addEventListener("keypress", function onEvent(event) {
             deletePhoto();
             break;
         case "p":
-            showCountDownAndMakePhoto();
+            loadXMLDoc("../doPhoto", function () { });
             break;
         case "c":
             var d = new Date();
@@ -230,9 +230,8 @@ function makeImageView(list) {
             '<div class="container">' +
             '</div>' +
             '</div>';
-        document.getElementById("gallery").appendChild(node);
-        var polaroids = document.getElementsByClassName("polaroid");
-        polaroids[polaroids.length - 1].style.transform = "rotate(" + (Math.floor(Math.random() * 20) - 10).toString() + "deg)";
+        node.style.transform = "rotate(" + (Math.floor(Math.random() * 20) - 10).toString() + "deg)";
+        document.getElementById("gallery").prepend(node);
     }
 
     var imgList = document.getElementsByClassName('myImg');
