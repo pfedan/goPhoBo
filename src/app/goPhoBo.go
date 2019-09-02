@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"image/jpeg"
+	"io"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -68,7 +69,7 @@ func NewPhoBo(pFlags *PhoBoFlags) *PhoBo {
 
 	d.remoteCommand = "nothing"
 	d.lastImageName = ""
-	d.cntPhotos = uint64(len(getImageFileNames(d.f.imgPath)))
+	d.cntPhotos = uint64(getImageFileCount(d.f.imgPath))
 
 	return d
 }
@@ -109,17 +110,20 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 		out, err := gphotoCmd.CombinedOutput()
 		if err != nil {
 			log.Printf("Executed photo command. \n   -> FAILED: Output: \n%s", out)
-			log.Fatal(err)
-		}
-		log.Printf("Executed photo command. \n   -> Output: \n%s", out)
+			log.Printf("'err' : %q", err)
 
-		// open new photo
+			copy("../../res/PhoBo.jpg", d.f.imgPath+fname)
+		} else {
+			log.Printf("Executed photo command. \n   -> Output: \n%s", out)
+		}
+
 		fa, err := os.Open(d.f.imgPath + fname)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer fa.Close()
 
+		// open new photo
 		m, _, err := image.Decode(fa)
 		if err != nil {
 			log.Fatal(err)
@@ -130,17 +134,40 @@ func (d *PhoBo) cbDoPhoto(e *fsm.Event) {
 }
 
 func saveThumbnail(img image.Image, d *PhoBo, fname string) {
-	if m, ok := img.(*image.RGBA); ok {
-		o := jpeg.Options{Quality: 90}
-		mThumbnail := resize.Resize(d.f.thumbWidth, 0, m, resize.Bicubic)
-		fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
-		if errb != nil {
-			fmt.Println(errb)
-			return
-		}
-		defer fb.Close()
-		jpeg.Encode(fb, mThumbnail, &o)
+	o := jpeg.Options{Quality: 90}
+	mThumbnail := resize.Resize(d.f.thumbWidth, 0, img, resize.Bicubic)
+	fb, errb := os.OpenFile(d.f.imgPath+"small/"+fname, os.O_WRONLY|os.O_CREATE, 0600)
+	if errb != nil {
+		fmt.Println(errb)
+		return
 	}
+	defer fb.Close()
+	jpeg.Encode(fb, mThumbnail, &o)
+}
+
+func copy(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
 }
 
 func (d *PhoBo) cbDeletePhoto(e *fsm.Event) {
@@ -189,6 +216,7 @@ type responseStatus struct {
 	CurrentState        string   `json:"currentState"`
 	PossibleTransitions []string `json:"possibleTransitions"`
 	RemoteCommand       string   `json:"remoteCommand"`
+	LastImageName       string   `json:"lastImageName`
 }
 
 type eventRouteInfo struct {
@@ -220,6 +248,7 @@ func handleEventRoute(w http.ResponseWriter, r *http.Request, o eventRouteInfo) 
 		CurrentState:        fsm.Current(),
 		PossibleTransitions: fsm.AvailableTransitions(),
 		RemoteCommand:       o.p.remoteCommand,
+		LastImageName:       o.p.lastImageName,
 	}
 
 	json.NewEncoder(w).Encode(res)
@@ -238,7 +267,24 @@ func getImageFileNames(path string) []string {
 		}
 		list = append(list, f.Name())
 	}
-	return list
+	return list[0:mPhoBo.cntPhotos]
+}
+
+func getImageFileCount(path string) int {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		return 0
+	}
+
+	var i = 0
+	for _, f := range files {
+		if f.IsDir() {
+			continue
+		}
+		i++
+	}
+
+	return i
 }
 
 func getStatus(w http.ResponseWriter, r *http.Request) {
@@ -254,6 +300,7 @@ func getStatus(w http.ResponseWriter, r *http.Request) {
 		CurrentState:        mPhoBo.FSM.Current(),
 		PossibleTransitions: mPhoBo.FSM.AvailableTransitions(),
 		RemoteCommand:       mPhoBo.remoteCommand,
+		LastImageName:       mPhoBo.lastImageName,
 	}
 
 	json.NewEncoder(w).Encode(res)

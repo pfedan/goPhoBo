@@ -102,7 +102,7 @@ document.addEventListener("keypress", function onEvent(event) {
             deletePhoto();
             break;
         case "p":
-            loadXMLDoc("../doPhoto", function () { });
+            loadXMLDoc("../doPhoto", storeLatestImageName);
             break;
         case "c":
             var d = new Date();
@@ -181,11 +181,16 @@ function showCountDownAndMakePhoto() {
     setTimeout(function () { showCountdownNumber(2) }, 2000);
     setTimeout(function () { showCountdownNumber(1) }, 3000);
     setTimeout(function () { showCountdownNumber("Smile") }, 4000);
-    setTimeout(function () { loadXMLDoc("../doPhoto", function () { }) }, 4000 - tCal);
+    setTimeout(function () { loadXMLDoc("../doPhoto", storeLatestImageName) }, 4000 - tCal);
 }
 function showCountdownNumber(num) {
     var divCDNum = document.getElementById("countdown_content");
     divCDNum.innerHTML = num.toString();
+}
+
+function storeLatestImageName() {
+    var res = JSON.parse(this.responseText);
+    latestImageName = res.lastImageName;
 }
 
 function loadXMLDoc(url, cfunc) {
@@ -208,10 +213,6 @@ function loadXMLDoc(url, cfunc) {
 function getNewImageList() {
     if (this.readyState == 4 && this.status == 200) {
         var res = JSON.parse(this.responseText);
-
-        if (Array.isArray(res.imageFiles)) {
-            latestImageName = res.imageFiles.slice(-1)[0];
-        }
 
         if (Array.isArray(res.imageFiles) && currentState == 'home') {
             makeImageView(res.imageFiles);
