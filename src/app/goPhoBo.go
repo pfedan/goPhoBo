@@ -216,7 +216,7 @@ type responseStatus struct {
 	CurrentState        string   `json:"currentState"`
 	PossibleTransitions []string `json:"possibleTransitions"`
 	RemoteCommand       string   `json:"remoteCommand"`
-	LastImageName       string   `json:"lastImageName`
+	LastImageName       string   `json:"lastImageName"`
 }
 
 type eventRouteInfo struct {
