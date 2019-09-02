@@ -60,22 +60,23 @@ func Test_routes(t *testing.T) {
 
 	tests := []struct {
 		name string
-		e    string
 	}{
-		{name: "beginSmile", e: "beginSmile"},
-		{name: "endSmile", e: "endSmile"},
-		{name: "doPhoto", e: "doPhoto"},
-		{name: "acceptPhoto", e: "acceptPhoto"},
-		{name: "doPhoto", e: "doPhoto"},
-		{name: "deletePhoto", e: "deletePhoto"},
-		{name: "status", e: "status"},
-		{name: "images", e: "images"},
+		{name: "beginSmile"},
+		{name: "endSmile"},
+		{name: "doPhoto"},
+		{name: "acceptPhoto"},
+		{name: "doPhoto"},
+		{name: "deletePhoto"},
+		{name: "status"},
+		{name: "deleteAll"},
+		{name: "images"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := http.Get("http://localhost:8080/" + tt.e)
+			res, err := http.Get("http://localhost:8080/" + tt.name)
+			time.Sleep(50 * time.Millisecond)
 			if err != nil || res.Status != "200 OK" {
-				t.Errorf("EventRoute \"%s\" did not respond.", tt.e)
+				t.Errorf("EventRoute \"%s\" did not respond.", tt.name)
 			}
 		})
 	}
