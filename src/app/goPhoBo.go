@@ -255,7 +255,7 @@ func handleEventRoute(w http.ResponseWriter, r *http.Request, o eventRouteInfo) 
 }
 
 func getImageFileNames(path string) []string {
-	var list []string
+	list := []string{}
 	files, err := ioutil.ReadDir(path)
 	if err != nil {
 		return list

@@ -74,7 +74,7 @@ func Test_routes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := http.Get("http://localhost:8080/" + tt.name)
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(350 * time.Millisecond)
 			if err != nil || res.Status != "200 OK" {
 				t.Errorf("EventRoute \"%s\" did not respond.", tt.name)
 			}
