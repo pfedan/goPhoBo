@@ -18,12 +18,12 @@ func TestCircle_getColorAt(t *testing.T) {
 		args args
 		want color.RGBA
 	}{
-		{name: "Center",
+		{name: "Center", // grab color from inside a circle (should be color of circle)
 			c:    &Circle{R: 100, X: 100, Y: 100, red: 1.0, green: 1.0, blue: 1.0},
 			args: args{x: 100, y: 100},
 			want: color.RGBA{R: 200, G: 200, B: 200, A: 255},
 		},
-		{name: "Outside",
+		{name: "Outside", // grab color from outside a circle (should be black)
 			c:    &Circle{R: 100, X: 100, Y: 100, red: 1.0, green: 1.0, blue: 1.0},
 			args: args{x: 0, y: 0},
 			want: color.RGBA{R: 0, G: 0, B: 0, A: 0},
@@ -47,12 +47,12 @@ func TestGetImg(t *testing.T) {
 		args args
 		want image.Rectangle
 	}{
-		{
-			name: "noSeed",
+		{ // Random image
+			name: "noSeed", 
 			args: args{o: RandImgOptions{H: 50, W: 50}},
 			want: image.Rectangle{image.Point{0, 0}, image.Point{50, 50}},
 		},
-		{
+		{ // Deterministic image with seed provided
 			name: "withSeed",
 			args: args{o: RandImgOptions{H: 800, W: 600, Seed: 1}},
 			want: image.Rectangle{image.Point{0, 0}, image.Point{600, 800}},
