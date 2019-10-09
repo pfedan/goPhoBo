@@ -3,7 +3,7 @@
 <a href="https://codeclimate.com/github/pfedan/goPhoBo/test_coverage"><img src="https://api.codeclimate.com/v1/badges/e3350c7b4099b1c43e70/test_coverage" /></a>
 
 # goPhoBo
-A photo booth, implemented in Go language
+A photo booth, implemented in [Go language](https://golang.org/)
 
 ## Work in progress
 Have a soup while waiting:
