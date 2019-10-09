@@ -8,10 +8,13 @@ import (
 	"time"
 )
 
+// RandImgOptions specifies width, height and an optional seed for the creation of a random image
 type RandImgOptions struct {
 	W, H int
 	Seed int64
 }
+
+// Circle defines a circle by x and y coordinates and a radius.
 type Circle struct {
 	X, Y, R          float64
 	red, green, blue float64
@@ -34,6 +37,7 @@ func (c *Circle) getColorAt(x, y float64) color.RGBA {
 	}
 }
 
+// GetImg creates a random image of the size specified in o (RandImgOptions). If a seed is provided, the result is deterministic.
 func GetImg(o RandImgOptions) *image.RGBA {
 	circs := make([]*Circle, 20)
 	m := image.NewRGBA(image.Rect(0, 0, o.W, o.H))
