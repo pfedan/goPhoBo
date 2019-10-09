@@ -73,7 +73,7 @@ function hideElement(element) {
 
 document.addEventListener("keypress", function onEvent(event) {
     switch (event.key) {
-        case "1":
+        case "1": // Multi-purpose-key 1
             if (currentState == "home") {
                 showCountDownAndMakePhoto()
             }
@@ -81,7 +81,7 @@ document.addEventListener("keypress", function onEvent(event) {
                 acceptPhoto();
             }
             break;
-        case "2":
+        case "2": // Multi-purpose-key 2
             if (currentState == "home") {
                 beginSmile()
             }
@@ -89,22 +89,22 @@ document.addEventListener("keypress", function onEvent(event) {
                 deletePhoto();
             }
             break;
-        case "s":
+        case "s": // Display JSON of status
             toggleElementVisibility('status');
             break;
-        case "a":
+        case "a": // Display current state
             toggleElementVisibility('currentState')
             break;
-        case "y":
+        case "y": // Call acceptPhoto transition
             acceptPhoto();
             break;
-        case "n":
+        case "n": // Call deletePhoto transition
             deletePhoto();
             break;
-        case "p":
+        case "p": // directly take photo without countdown
             loadXMLDoc("../doPhoto", storeLatestImageName);
             break;
-        case "c":
+        case "c": // synchronize shutter with countdown (press the key exactly when the shutter is activated)
             var d = new Date();
             tCal = d.getTime() - lastCountdownStart - 4000;
             if (Math.abs(tCal) > 2000) {
@@ -112,13 +112,13 @@ document.addEventListener("keypress", function onEvent(event) {
             }
             console.log("tCal: " + tCal);
             break;
-        case "!":
+        case "!": // delete ALL photos on the server
             if (confirm("This will delete ALL photos. Please confirm to proceed.")) {
                 loadXMLDoc("../deleteAll", function () { });
                 location.reload();
             }
             break;
-        default:
+        default: // Log all keys that are not recognized
             console.log("Unregistered key-event:\'" + event.key + "\'.")
     }
 });
